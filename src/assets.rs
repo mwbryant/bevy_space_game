@@ -3,22 +3,55 @@ use std::fs;
 use bevy::prelude::*;
 use bevy::reflect::erased_serde::private::serde::Deserialize;
 use bevy::utils::HashMap;
+use serde::Serialize;
 
-use crate::item::WorldObject;
-use crate::prelude::ItemType;
+use crate::world_object::WorldObject;
 use ron::de::from_str;
 
 pub struct GameAssetsPlugin;
 
-#[derive(Default, Clone, Copy, Debug, Reflect, Deserialize)]
-pub struct MyRect {
-    pub min: Vec2,
-    pub max: Vec2,
+//TODO move this somewhere generic
+#[derive(Deserialize, Serialize, Hash, Debug, PartialEq, Eq, Clone, Copy)]
+pub enum Orientation {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+//FIXME Graphics and Graphic are too confusing of names
+#[derive(Deserialize, Serialize, Hash, Debug, PartialEq, Eq, Clone, Copy)]
+pub enum Graphic {
+    Player(Orientation),
+    WorldObject(WorldObject),
+}
+
+#[derive(Clone, Copy, Debug, Reflect, Deserialize, PartialEq, Eq, Hash)]
+enum SpriteSheet {
+    Character,
+    StarterGraphics,
+}
+
+#[derive(Clone, Copy, Debug, Reflect, Deserialize)]
+pub struct SpriteDesc {
+    sheet: SpriteSheet,
+    min: Vec2,
+    max: Vec2,
+    #[serde(default)]
+    flip_x: bool,
+    #[serde(default)]
+    flip_y: bool,
+}
+
+pub struct Graphics {
+    handle_map: HashMap<SpriteSheet, Handle<TextureAtlas>>,
+    graphics_map: HashMap<Graphic, (SpriteDesc, usize)>,
 }
 
 #[derive(Deserialize)]
 pub struct GraphicsDesc {
-    map: HashMap<WorldObject, MyRect>,
+    sheet_filename_map: HashMap<SpriteSheet, String>,
+    graphics_map: HashMap<Graphic, SpriteDesc>,
 }
 
 impl Plugin for GameAssetsPlugin {
@@ -27,26 +60,57 @@ impl Plugin for GameAssetsPlugin {
             StartupStage::PreStartup,
             Self::load_graphics.label("graphics"),
         );
+        //.add_system(Self::set_img_sampler_filter);
+    }
+}
+pub fn update_sprite(sprite: &mut TextureAtlasSprite, res: &Graphics, graphic: Graphic) {
+    if let Some((_, index)) = res.graphics_map.get(&graphic) {
+        sprite.index = *index;
+    } else {
+        error!(
+            "Failed to load sprite for {:?}, missing in graphics_desc.ron?",
+            graphic
+        );
     }
 }
 
-pub const RESOLUTION: f32 = 16.0 / 9.0;
-
-pub struct PlaceHolderGraphics {
-    pub texture_atlas: Handle<TextureAtlas>,
-    pub player_index: usize,
-    pub box_index: usize,
-    pub item_map: HashMap<WorldObject, usize>,
+pub fn spawn_sprite(commands: &mut Commands, res: &Graphics, to_spawn: Graphic) -> Entity {
+    if let Some((desc, index)) = res.graphics_map.get(&to_spawn) {
+        let mut sprite = TextureAtlasSprite::new(*index);
+        sprite.flip_x = desc.flip_x;
+        sprite.flip_y = desc.flip_y;
+        let atlas = &res.handle_map[&desc.sheet];
+        commands
+            .spawn_bundle(SpriteSheetBundle {
+                sprite: sprite,
+                texture_atlas: atlas.clone(),
+                transform: Transform {
+                    ..Default::default()
+                },
+                ..Default::default()
+            })
+            .id()
+    } else {
+        error!(
+            "Failed to load sprite for {:?}, missing in graphics_desc.ron?",
+            to_spawn
+        );
+        commands
+            .spawn()
+            .insert(Transform::default())
+            .insert(GlobalTransform::default())
+            .id()
+    }
 }
 
 impl GameAssetsPlugin {
     fn load_graphics(
         mut commands: Commands,
         assets: Res<AssetServer>,
+        _image_assets: ResMut<Assets<Image>>,
         mut texture_assets: ResMut<Assets<TextureAtlas>>,
     ) {
-        let image_handle = assets.load("placeholder.png");
-        let sprite_desc = fs::read_to_string("assets/placeholder_desc.ron").unwrap();
+        let sprite_desc = fs::read_to_string("assets/graphics_desc.ron").unwrap();
 
         let sprite_desc: GraphicsDesc = match from_str(&sprite_desc) {
             Ok(x) => x,
@@ -55,64 +119,34 @@ impl GameAssetsPlugin {
                 std::process::exit(1);
             }
         };
-        let mut atlas = TextureAtlas::new_empty(image_handle, Vec2::splat(256.0));
 
-        let player_index = atlas.add_texture(bevy::sprite::Rect {
-            min: Vec2::splat(0.0),
-            max: Vec2::splat(32.0),
-        });
-
-        let mut item_map = HashMap::default();
-        for (item, rect) in sprite_desc.map.iter() {
-            println!("Found graphic {:?}", item);
-            let index = atlas.add_texture(bevy::sprite::Rect {
-                min: rect.min,
-                max: rect.max,
-            });
-            item_map.insert(*item, index);
+        let mut atlas_map = HashMap::default();
+        for (sheet, file_name) in sprite_desc.sheet_filename_map.iter() {
+            let image_handle = assets.load(file_name);
+            let atlas = TextureAtlas::new_empty(image_handle, Vec2::splat(256.0));
+            atlas_map.insert(*sheet, atlas);
         }
 
-        let flint_index = atlas.add_texture(bevy::sprite::Rect {
-            min: Vec2::new(34.0, 0.0),
-            max: Vec2::new(49.0, 16.0),
-        });
-        let grass_index = atlas.add_texture(bevy::sprite::Rect {
-            min: Vec2::new(50.0, 0.0),
-            max: Vec2::new(65.0, 16.0),
-        });
+        let mut graphics_map = HashMap::default();
+        for (item, desc) in sprite_desc.graphics_map.iter() {
+            println!("Found graphic {:?}", item);
+            let atlas = atlas_map.get_mut(&desc.sheet).unwrap();
+            let index = atlas.add_texture(bevy::sprite::Rect {
+                min: desc.min,
+                max: desc.max,
+            });
+            graphics_map.insert(*item, (*desc, index));
+        }
 
-        let axe_index = atlas.add_texture(bevy::sprite::Rect {
-            min: Vec2::new(34.0, 18.0),
-            max: Vec2::new(49.0, 33.0),
-        });
+        let mut handle_map = HashMap::default();
+        for (sheet, atlas) in atlas_map {
+            let atlas_handle = texture_assets.add(atlas);
+            handle_map.insert(sheet, atlas_handle);
+        }
 
-        let twigs_index = atlas.add_texture(bevy::sprite::Rect {
-            min: Vec2::new(50.0, 18.0),
-            max: Vec2::new(65.0, 33.0),
-        });
-
-        let wood_index = atlas.add_texture(bevy::sprite::Rect {
-            min: Vec2::new(34.0, 34.0),
-            max: Vec2::new(49.0, 49.0),
-        });
-
-        item_map.insert(WorldObject::Item(ItemType::Flint), flint_index);
-        item_map.insert(WorldObject::Item(ItemType::Grass), grass_index);
-        item_map.insert(WorldObject::Item(ItemType::Axe), axe_index);
-        item_map.insert(WorldObject::Item(ItemType::Wood), wood_index);
-
-        let box_index = atlas.add_texture(bevy::sprite::Rect {
-            min: Vec2::new(0.0, 34.0),
-            max: Vec2::new(32.0, 64.0),
-        });
-
-        let atlas_handle = texture_assets.add(atlas);
-
-        commands.insert_resource(PlaceHolderGraphics {
-            texture_atlas: atlas_handle,
-            player_index: player_index,
-            box_index: box_index,
-            item_map: item_map,
+        commands.insert_resource(Graphics {
+            handle_map: handle_map,
+            graphics_map: graphics_map,
         });
     }
 }

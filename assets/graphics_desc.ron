@@ -1,0 +1,50 @@
+(
+    sheet_filename_map: {
+        Character: "character.png",
+        StarterGraphics: "starter_graphics.png"
+    },
+    graphics_map: {
+        Player(Down): SpriteDesc(
+            sheet: Character,
+            min: (0,0),
+            max: (31, 31),
+        ),
+        Player(Up): SpriteDesc(
+            sheet: Character,
+            min: (32,0),
+            max: (63,31),
+        ),
+        Player(Right): SpriteDesc(
+            sheet: Character,
+            min: (64,0),
+            max: (95,31),
+        ),
+        Player(Left): SpriteDesc(
+            sheet: Character,
+            min: (96,0),
+            max: (127, 31),
+        ),
+        WorldObject(Terminal(Down)): SpriteDesc(
+            sheet: StarterGraphics,
+            min: (96,0),
+            max: (127, 31),
+        ),
+        WorldObject(Terminal(Up)): SpriteDesc(
+            sheet: StarterGraphics,
+            min: (96,0),
+            max: (127, 31),
+            flip_y: true
+        ),
+        WorldObject(Terminal(Right)): SpriteDesc(
+            sheet: StarterGraphics,
+            min: (0,32),
+            max: (31, 63),
+        ),
+        WorldObject(Terminal(Left)): SpriteDesc(
+            sheet: StarterGraphics,
+            min: (0,32),
+            max: (31, 63),
+            flip_x: true,
+        ),
+    }
+)
