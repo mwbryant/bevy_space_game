@@ -1,0 +1,27 @@
+[package]
+name = "bevy_space_game"
+version = "0.1.0"
+edition = "2021"
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[dependencies]
+bevy = { version = "0.6", features = [
+    "dynamic",  
+    "bevy_gilrs",
+    "bevy_winit",
+    "render",
+    "png",
+    "hdr",
+    "vorbis",
+    "x11",
+    "filesystem_watcher" ] }
+
+bevy_kira_audio = { version = "0.8", features = ["ogg", "wav"] }
+bevy-inspector-egui = "0.8"
+serde = "1.0.136"
+ron = "0.7.0"
