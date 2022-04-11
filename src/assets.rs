@@ -132,14 +132,17 @@ impl GameAssetsPlugin {
             }
         };
 
+        //Load all images and create atlases
         let mut atlas_map = HashMap::default();
         for (sheet, file_name) in sprite_desc.sheet_filename_map.iter() {
             let image_handle = assets.load(file_name);
             loading.add(&image_handle);
+            //FIXME image size should either come from loaded image or from desc ron
             let atlas = TextureAtlas::new_empty(image_handle, Vec2::splat(256.0));
             atlas_map.insert(*sheet, atlas);
         }
 
+        //Add all sprites to their atlases and save the index
         let mut graphics_map = HashMap::default();
         for (item, desc) in sprite_desc.graphics_map.iter() {
             println!("Found graphic {:?}", item);
@@ -151,6 +154,7 @@ impl GameAssetsPlugin {
             graphics_map.insert(*item, (*desc, index));
         }
 
+        //Save the handles
         let mut handle_map = HashMap::default();
         for (sheet, atlas) in atlas_map {
             let atlas_handle = texture_assets.add(atlas);

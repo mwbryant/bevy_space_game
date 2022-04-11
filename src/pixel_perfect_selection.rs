@@ -29,49 +29,39 @@ impl Plugin for PixelPerfectPlugin {
     }
 }
 
+//TODO handle rotations and x/y flip
 fn test_hitbox(
     query: Query<(&Transform, &Graphic, &Name)>,
     hitboxes: Res<HitboxCache>,
     mouse: Res<MousePosition>,
 ) {
+    let mut over_anything = false;
     for (transform, graphic, name) in query.iter() {
-        if let Some(graphic) = hitboxes.map.get(graphic) {
+        if let Some(hit_box) = hitboxes.map.get(graphic) {
             //x and y are centered
-            let x_offset = transform.translation.x - graphic.width as f32 / 2.0;
-            let y_offset = transform.translation.y - graphic.height as f32 / 2.0;
+            let x_offset = transform.translation.x - hit_box.width as f32 / 2.0;
+            let y_offset = transform.translation.y - hit_box.height as f32 / 2.0;
 
             let rel_x = (mouse.0.x - x_offset) as isize;
             let rel_y = (mouse.0.y - y_offset) as isize;
 
             if rel_x >= 0
-                && rel_x < graphic.width as isize
+                && rel_x < hit_box.width as isize
                 && rel_y >= 0
-                && rel_y < graphic.height as isize
+                && rel_y < hit_box.height as isize
             {
                 //invert y
-                let rel_y = graphic.height as isize - rel_y - 1;
-                if check_collision(
-                    rel_x as usize,
-                    rel_y as usize,
-                    graphic.height,
-                    &graphic.mask,
-                ) {
+                let rel_y = hit_box.height as isize - rel_y - 1;
+                if hit_box.mask[rel_x as usize][rel_y as usize] {
+                    over_anything = true;
                     println!("Over {}!", name.as_str());
                 }
             }
         }
     }
-}
-
-fn check_collision(rel_x: usize, rel_y: usize, width: usize, mask: &[Vec<bool>]) -> bool {
-    for (index, pixel) in mask.iter().flatten().enumerate() {
-        let x = index / width;
-        let y = index % width;
-        if *pixel && x == rel_x && y == rel_y {
-            return true;
-        }
+    if !over_anything {
+        println!("Over Nothing");
     }
-    false
 }
 
 fn create_hitbox_cache(
@@ -88,7 +78,6 @@ fn create_hitbox_cache(
 
         if server.get_load_state(texture.clone()) == LoadState::Loaded {
             let image = image_assets.get(texture).unwrap();
-            assert!(Rgba8UnormSrgb == image.texture_descriptor.format);
             add_graphic_to_hitboxes(&mut cache, graphic, desc.min, desc.max, image);
         } else {
             println!("Not Loaded");
@@ -105,6 +94,8 @@ pub fn add_graphic_to_hitboxes(
     max: Vec2,
     image: &Image,
 ) {
+    assert!(Rgba8UnormSrgb == image.texture_descriptor.format);
+
     let width = max.x as usize - min.x as usize;
     let height = max.y as usize - min.y as usize;
     let image_width = image.texture_descriptor.size.width as usize;

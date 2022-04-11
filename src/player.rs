@@ -30,7 +30,8 @@ fn spawn_terminal(mut commands: Commands, graphics: Res<Graphics>) {
     );
     commands
         .entity(ent)
-        .insert(Transform::from_xyz(32.0, 32.0, 100.0));
+        .insert(Name::new("Terminal"))
+        .insert(Transform::from_xyz(-32.0, 32.0, 100.0));
 
     let ent = spawn_sprite(
         &mut commands,
@@ -39,15 +40,17 @@ fn spawn_terminal(mut commands: Commands, graphics: Res<Graphics>) {
     );
     commands
         .entity(ent)
+        .insert(Name::new("Terminal"))
         .insert(Transform::from_xyz(32.0, -32.0, 100.0));
 
     let ent = spawn_sprite(
         &mut commands,
         &graphics,
-        Graphic::WorldObject(WorldObject::Terminal(Orientation::Up)),
+        Graphic::WorldObject(WorldObject::Terminal(Orientation::Down)),
     );
     commands
         .entity(ent)
+        .insert(Name::new("Terminal"))
         .insert(Transform::from_xyz(-32.0, -32.0, 100.0));
 }
 

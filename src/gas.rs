@@ -7,7 +7,7 @@ pub enum Gas {
     Oxygen,
     Nitrogen,
     CarbonDioxide,
-    Helium,
+    Helium3,
     Hydrogen,
     WaterVapor,
 }
