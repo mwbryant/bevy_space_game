@@ -10,7 +10,6 @@ use ron::de::from_str;
 
 pub struct GameAssetsPlugin;
 
-//TODO move this somewhere generic
 #[derive(Deserialize, Serialize, Hash, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Orientation {
     Up,
@@ -26,12 +25,14 @@ pub enum Graphic {
     WorldObject(WorldObject),
 }
 
+//All sheets in the assets
 #[derive(Clone, Copy, Debug, Reflect, Deserialize, PartialEq, Eq, Hash)]
 enum SpriteSheet {
     Character,
     StarterGraphics,
 }
 
+//Entry on the ron sheet description
 #[derive(Clone, Copy, Debug, Reflect, Deserialize)]
 pub struct SpriteDesc {
     sheet: SpriteSheet,
@@ -43,11 +44,14 @@ pub struct SpriteDesc {
     flip_y: bool,
 }
 
+//Resource holding all handles and indices
+//XXX Make sure the performance isn't trash...
 pub struct Graphics {
     handle_map: HashMap<SpriteSheet, Handle<TextureAtlas>>,
     graphics_map: HashMap<Graphic, (SpriteDesc, usize)>,
 }
 
+//Format to be loaded from ron
 #[derive(Deserialize)]
 pub struct GraphicsDesc {
     sheet_filename_map: HashMap<SpriteSheet, String>,

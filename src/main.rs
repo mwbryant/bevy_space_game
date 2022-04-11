@@ -4,18 +4,21 @@ use std::fs;
 
 use bevy::{prelude::*, render::camera::ScalingMode};
 
-pub const CLEAR: Color = Color::rgb(0.1, 0.1, 0.1);
+pub const CLEAR: Color = Color::rgb(0.3, 0.3, 0.3);
 pub const RESOLUTION: f32 = 16.0 / 9.0;
 
 mod ascii;
 mod assets;
+mod canisters;
 mod debug;
+mod gas;
 mod player;
 mod utils;
 mod world_object;
 
 use ascii::AsciiPlugin;
 use assets::GameAssetsPlugin;
+use canisters::CanisterPlugin;
 use debug::DebugPlugin;
 use player::{Player, PlayerPlugin};
 use ron::from_str;
@@ -35,11 +38,12 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
+        .add_plugin(DebugPlugin)
+        .add_plugin(CanisterPlugin)
         .add_startup_system(spawn_camera)
         .add_plugin(AsciiPlugin { tile_size: 32.0 })
         .add_plugin(PlayerPlugin)
         .add_plugin(GameAssetsPlugin)
-        .add_plugin(DebugPlugin)
         .add_system(save_game)
         .add_system(load_game)
         .run();
@@ -48,7 +52,9 @@ fn main() {
 fn spawn_camera(mut commands: Commands) {
     let mut camera = OrthographicCameraBundle::new_2d();
 
-    let size = 450.0 / 2.0;
+    //let size = 450.0 / 2.0;
+    let size = 300.0 / 2.0;
+    //let size = 60.0 / 2.0;
 
     camera.orthographic_projection.right = size * RESOLUTION;
     camera.orthographic_projection.left = -size * RESOLUTION;

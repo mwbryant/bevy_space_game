@@ -7,22 +7,22 @@
         Player(Down): SpriteDesc(
             sheet: Character,
             min: (0,0),
-            max: (31, 31),
+            max: (32, 32),
         ),
         Player(Up): SpriteDesc(
             sheet: Character,
             min: (32,0),
-            max: (63,31),
+            max: (63,32),
         ),
         Player(Right): SpriteDesc(
             sheet: Character,
             min: (64,0),
-            max: (95,31),
+            max: (95,32),
         ),
         Player(Left): SpriteDesc(
             sheet: Character,
             min: (96,0),
-            max: (127, 31),
+            max: (127, 32),
         ),
         WorldObject(Terminal(Down)): SpriteDesc(
             sheet: StarterGraphics,
@@ -45,6 +45,56 @@
             min: (0,32),
             max: (31, 63),
             flip_x: true,
+        ),
+        WorldObject(Canister): SpriteDesc(
+            sheet: StarterGraphics,
+            min: (109,73),
+            max: (114, 86),
+        ),
+        WorldObject(SmallLabel(0)): SpriteDesc(
+            sheet: StarterGraphics,
+            min: (30,137),
+            max: (31, 144),
+        ),
+        WorldObject(SmallLabel(1)): SpriteDesc(
+            sheet: StarterGraphics,
+            min: (30,138),
+            max: (31, 145),
+        ),
+        WorldObject(SmallLabel(2)): SpriteDesc(
+            sheet: StarterGraphics,
+            min: (30,139),
+            max: (31, 146),
+        ),
+        WorldObject(SmallLabel(3)): SpriteDesc(
+            sheet: StarterGraphics,
+            min: (30,140),
+            max: (31, 147),
+        ),
+        WorldObject(SmallLabel(4)): SpriteDesc(
+            sheet: StarterGraphics,
+            min: (30,141),
+            max: (31, 148),
+        ),
+        WorldObject(SmallLabel(5)): SpriteDesc(
+            sheet: StarterGraphics,
+            min: (30,142),
+            max: (31, 149),
+        ),
+        WorldObject(SmallLabel(6)): SpriteDesc(
+            sheet: StarterGraphics,
+            min: (30,143),
+            max: (31, 150),
+        ),
+        WorldObject(SmallLabel(7)): SpriteDesc(
+            sheet: StarterGraphics,
+            min: (30,144),
+            max: (31, 151),
+        ),
+        WorldObject(CanisterMachine): SpriteDesc (
+            sheet: StarterGraphics,
+            min: (64,64),
+            max: (96,96),
         ),
     }
 )
