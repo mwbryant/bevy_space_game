@@ -3,6 +3,7 @@
 use std::fs;
 
 use bevy::{prelude::*, render::camera::ScalingMode};
+use bevy_loading::prelude::*;
 
 pub const CLEAR: Color = Color::rgb(0.3, 0.3, 0.3);
 pub const RESOLUTION: f32 = 16.0 / 9.0;
@@ -12,6 +13,8 @@ mod assets;
 mod canisters;
 mod debug;
 mod gas;
+mod mouse;
+mod pixel_perfect_selection;
 mod player;
 mod utils;
 mod world_object;
@@ -20,9 +23,17 @@ use ascii::AsciiPlugin;
 use assets::GameAssetsPlugin;
 use canisters::CanisterPlugin;
 use debug::DebugPlugin;
+use mouse::{MainCamera, MousePlugin};
+use pixel_perfect_selection::PixelPerfectPlugin;
 use player::{Player, PlayerPlugin};
 use ron::from_str;
 use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Component)]
+enum AppState {
+    Splash,
+    Game,
+}
 
 fn main() {
     let height = 900.0;
@@ -38,7 +49,15 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
+        .add_state(AppState::Splash)
+        // Add loading plugin for the splash screen
+        .add_plugin(LoadingPlugin {
+            loading_state: AppState::Splash,
+            next_state: AppState::Game,
+        })
         .add_plugin(DebugPlugin)
+        .add_plugin(PixelPerfectPlugin)
+        .add_plugin(MousePlugin)
         .add_plugin(CanisterPlugin)
         .add_startup_system(spawn_camera)
         .add_plugin(AsciiPlugin { tile_size: 32.0 })
@@ -53,8 +72,8 @@ fn spawn_camera(mut commands: Commands) {
     let mut camera = OrthographicCameraBundle::new_2d();
 
     //let size = 450.0 / 2.0;
-    let size = 300.0 / 2.0;
-    //let size = 60.0 / 2.0;
+    //let size = 300.0 / 2.0;
+    let size = 95.0 / 2.0;
 
     camera.orthographic_projection.right = size * RESOLUTION;
     camera.orthographic_projection.left = -size * RESOLUTION;
@@ -64,7 +83,7 @@ fn spawn_camera(mut commands: Commands) {
 
     camera.orthographic_projection.scaling_mode = ScalingMode::None;
 
-    commands.spawn_bundle(camera);
+    commands.spawn_bundle(camera).insert(MainCamera);
 }
 
 #[derive(Serialize, Deserialize)]

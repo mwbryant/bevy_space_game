@@ -1,8 +1,10 @@
 use bevy::prelude::*;
 use bevy_inspector_egui::{Inspectable, RegisterInspectable};
+use serde::Deserialize;
 
 use crate::{
-    assets::{spawn_sprite, update_sprite, Graphic, Graphics},
+    assets::{spawn_sprite, Graphic, Graphics},
+    comp_from_config,
     gas::Gas,
     world_object::WorldObject,
 };
@@ -19,14 +21,14 @@ impl Plugin for CanisterPlugin {
     }
 }
 
-#[derive(Component, Default, Inspectable)]
+#[derive(Component, Default, Inspectable, Deserialize)]
 //TODO mols, temp, pressure
 pub struct Canister {
     percent_full: f32,
     gas: Gas,
 }
 
-#[derive(Component, Default, Inspectable)]
+#[derive(Component, Deserialize, Default, Inspectable)]
 pub struct CanisterMachine {
     canisters: [Canister; 4],
 }
@@ -40,13 +42,12 @@ struct Label {
 fn update_canister_graphics(
     canister_query: Query<(&Children, &Canister), Changed<Canister>>,
     machine_query: Query<(&Children, &CanisterMachine), Changed<CanisterMachine>>,
-    graphics: Res<Graphics>,
-    mut label_query: Query<(&mut TextureAtlasSprite, &Label)>,
+    mut label_query: Query<(&mut Graphic, &Label)>,
 ) {
     for (children, canister) in canister_query.iter() {
         for child in children.iter() {
             if let Ok((mut sprite, label)) = label_query.get_mut(*child) {
-                update_small_label(canister.percent_full, label.states, &mut sprite, &graphics)
+                update_small_label(canister.percent_full, label.states, &mut sprite)
             }
         }
     }
@@ -57,7 +58,6 @@ fn update_canister_graphics(
                     machine.canisters[label.id].percent_full,
                     label.states,
                     &mut sprite,
-                    &graphics,
                 );
             }
         }
@@ -85,7 +85,10 @@ fn spawn_canister_machine(mut commands: Commands, graphics: Res<Graphics>) {
     }
     commands
         .entity(ent)
-        .insert(CanisterMachine::default())
+        .insert(comp_from_config!(
+            CanisterMachine,
+            "config/canister_machine.ron"
+        ))
         .insert(Name::new("Machine"))
         .insert(Transform::from_xyz(40.0, 10.0, 100.0));
 }
@@ -116,19 +119,10 @@ fn spawn_canister(mut commands: Commands, graphics: Res<Graphics>) {
         .add_child(label);
 }
 
-fn update_small_label(
-    percent_full: f32,
-    states: usize,
-    sprite: &mut TextureAtlasSprite,
-    graphics: &Graphics,
-) {
+fn update_small_label(percent_full: f32, states: usize, sprite: &mut Graphic) {
     for i in (0..states).rev() {
         if percent_full > (i as f32 / states as f32) {
-            update_sprite(
-                sprite,
-                graphics,
-                Graphic::WorldObject(WorldObject::SmallLabel(i)),
-            );
+            *sprite = Graphic::WorldObject(WorldObject::SmallLabel(i));
             break;
         }
     }

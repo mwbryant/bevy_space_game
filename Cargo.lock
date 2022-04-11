@@ -515,6 +515,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_loading"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a2210dde718b160d8c58a4231e9fdb9527ead8923655f763b2d2e9ec707f78e"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bevy_log"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -663,6 +672,7 @@ dependencies = [
  "bevy",
  "bevy-inspector-egui",
  "bevy_kira_audio",
+ "bevy_loading",
  "ron",
  "serde",
 ]

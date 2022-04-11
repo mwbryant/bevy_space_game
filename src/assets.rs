@@ -3,6 +3,7 @@ use std::fs;
 use bevy::prelude::*;
 use bevy::reflect::erased_serde::private::serde::Deserialize;
 use bevy::utils::HashMap;
+use bevy_loading::prelude::AssetsLoading;
 use serde::Serialize;
 
 use crate::world_object::WorldObject;
@@ -19,7 +20,7 @@ pub enum Orientation {
 }
 
 //FIXME Graphics and Graphic are too confusing of names
-#[derive(Deserialize, Serialize, Hash, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Component, Deserialize, Serialize, Hash, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Graphic {
     Player(Orientation),
     WorldObject(WorldObject),
@@ -27,7 +28,7 @@ pub enum Graphic {
 
 //All sheets in the assets
 #[derive(Clone, Copy, Debug, Reflect, Deserialize, PartialEq, Eq, Hash)]
-enum SpriteSheet {
+pub enum SpriteSheet {
     Character,
     StarterGraphics,
 }
@@ -35,9 +36,9 @@ enum SpriteSheet {
 //Entry on the ron sheet description
 #[derive(Clone, Copy, Debug, Reflect, Deserialize)]
 pub struct SpriteDesc {
-    sheet: SpriteSheet,
-    min: Vec2,
-    max: Vec2,
+    pub sheet: SpriteSheet,
+    pub min: Vec2,
+    pub max: Vec2,
     #[serde(default)]
     flip_x: bool,
     #[serde(default)]
@@ -47,8 +48,8 @@ pub struct SpriteDesc {
 //Resource holding all handles and indices
 //XXX Make sure the performance isn't trash...
 pub struct Graphics {
-    handle_map: HashMap<SpriteSheet, Handle<TextureAtlas>>,
-    graphics_map: HashMap<Graphic, (SpriteDesc, usize)>,
+    pub handle_map: HashMap<SpriteSheet, Handle<TextureAtlas>>,
+    pub graphics_map: HashMap<Graphic, (SpriteDesc, usize)>,
 }
 
 //Format to be loaded from ron
@@ -63,18 +64,24 @@ impl Plugin for GameAssetsPlugin {
         app.add_startup_system_to_stage(
             StartupStage::PreStartup,
             Self::load_graphics.label("graphics"),
-        );
+        )
+        .add_system(update_sprite);
         //.add_system(Self::set_img_sampler_filter);
     }
 }
-pub fn update_sprite(sprite: &mut TextureAtlasSprite, res: &Graphics, graphic: Graphic) {
-    if let Some((_, index)) = res.graphics_map.get(&graphic) {
-        sprite.index = *index;
-    } else {
-        error!(
-            "Failed to load sprite for {:?}, missing in graphics_desc.ron?",
-            graphic
-        );
+pub fn update_sprite(
+    mut update_query: Query<(&mut TextureAtlasSprite, &Graphic), Changed<Graphic>>,
+    graphics: Res<Graphics>,
+) {
+    for (mut sprite, graphic) in update_query.iter_mut() {
+        if let Some((_, index)) = graphics.graphics_map.get(graphic) {
+            sprite.index = *index;
+        } else {
+            error!(
+                "Failed to load sprite for {:?}, missing in graphics_desc.ron?",
+                graphic
+            );
+        }
     }
 }
 
@@ -93,6 +100,7 @@ pub fn spawn_sprite(commands: &mut Commands, res: &Graphics, to_spawn: Graphic) 
                 },
                 ..Default::default()
             })
+            .insert(to_spawn)
             .id()
     } else {
         error!(
@@ -111,8 +119,8 @@ impl GameAssetsPlugin {
     fn load_graphics(
         mut commands: Commands,
         assets: Res<AssetServer>,
-        _image_assets: ResMut<Assets<Image>>,
         mut texture_assets: ResMut<Assets<TextureAtlas>>,
+        mut loading: ResMut<AssetsLoading>,
     ) {
         let sprite_desc = fs::read_to_string("assets/graphics_desc.ron").unwrap();
 
@@ -127,6 +135,7 @@ impl GameAssetsPlugin {
         let mut atlas_map = HashMap::default();
         for (sheet, file_name) in sprite_desc.sheet_filename_map.iter() {
             let image_handle = assets.load(file_name);
+            loading.add(&image_handle);
             let atlas = TextureAtlas::new_empty(image_handle, Vec2::splat(256.0));
             atlas_map.insert(*sheet, atlas);
         }

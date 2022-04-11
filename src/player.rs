@@ -1,10 +1,8 @@
-use std::fs;
-
 use bevy::prelude::*;
 use serde::Deserialize;
 
 use crate::{
-    assets::{spawn_sprite, update_sprite, Graphic, Graphics, Orientation},
+    assets::{spawn_sprite, Graphic, Graphics, Orientation},
     comp_from_config,
     world_object::WorldObject,
 };
@@ -54,30 +52,29 @@ fn spawn_terminal(mut commands: Commands, graphics: Res<Graphics>) {
 }
 
 fn player_movement(
-    mut player_query: Query<(&Player, &mut Transform, &mut TextureAtlasSprite)>,
-    graphics: Res<Graphics>,
+    mut player_query: Query<(&Player, &mut Transform, &mut Graphic)>,
     keyboard: Res<Input<KeyCode>>,
     time: Res<Time>,
 ) {
-    let (player, mut transform, mut sprite) = player_query.single_mut();
+    let (player, mut transform, mut graphic) = player_query.single_mut();
 
     let mut y_delta = 0.0;
     if keyboard.pressed(KeyCode::W) {
-        update_sprite(&mut sprite, &graphics, Graphic::Player(Orientation::Up));
+        *graphic = Graphic::Player(Orientation::Up);
         y_delta += player.move_speed * time.delta_seconds();
     }
     if keyboard.pressed(KeyCode::S) {
-        update_sprite(&mut sprite, &graphics, Graphic::Player(Orientation::Down));
+        *graphic = Graphic::Player(Orientation::Down);
         y_delta -= player.move_speed * time.delta_seconds();
     }
 
     let mut x_delta = 0.0;
     if keyboard.pressed(KeyCode::A) {
-        update_sprite(&mut sprite, &graphics, Graphic::Player(Orientation::Left));
+        *graphic = Graphic::Player(Orientation::Left);
         x_delta -= player.move_speed * time.delta_seconds();
     }
     if keyboard.pressed(KeyCode::D) {
-        update_sprite(&mut sprite, &graphics, Graphic::Player(Orientation::Right));
+        *graphic = Graphic::Player(Orientation::Right);
         x_delta += player.move_speed * time.delta_seconds();
     }
 

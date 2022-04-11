@@ -1,7 +1,9 @@
 use bevy_inspector_egui::Inspectable;
+use serde::Deserialize;
 
-#[derive(Inspectable, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Inspectable, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Gas {
+    None,
     Oxygen,
     Nitrogen,
     CarbonDioxide,
@@ -12,6 +14,6 @@ pub enum Gas {
 
 impl Default for Gas {
     fn default() -> Gas {
-        Gas::Nitrogen
+        Gas::None
     }
 }
