@@ -31,7 +31,7 @@ impl Plugin for PixelPerfectPlugin {
 
 //TODO handle rotations and x/y flip
 fn test_hitbox(
-    query: Query<(&Transform, &Graphic, &Name)>,
+    query: Query<(&GlobalTransform, &Graphic, &Name)>,
     hitboxes: Res<HitboxCache>,
     mouse: Res<MousePosition>,
 ) {

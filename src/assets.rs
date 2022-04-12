@@ -3,6 +3,7 @@ use std::fs;
 use bevy::prelude::*;
 use bevy::reflect::erased_serde::private::serde::Deserialize;
 use bevy::utils::HashMap;
+use bevy_inspector_egui::{Inspectable, RegisterInspectable};
 use bevy_loading::prelude::AssetsLoading;
 use serde::Serialize;
 
@@ -11,7 +12,7 @@ use ron::de::from_str;
 
 pub struct GameAssetsPlugin;
 
-#[derive(Deserialize, Serialize, Hash, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Inspectable, Deserialize, Serialize, Hash, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Orientation {
     Up,
     Down,
@@ -19,8 +20,16 @@ pub enum Orientation {
     Right,
 }
 
+impl Default for Orientation {
+    fn default() -> Self {
+        Orientation::Down
+    }
+}
+
 //FIXME Graphics and Graphic are too confusing of names
-#[derive(Component, Deserialize, Serialize, Hash, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(
+    Inspectable, Component, Deserialize, Serialize, Hash, Debug, PartialEq, Eq, Clone, Copy,
+)]
 pub enum Graphic {
     Player(Orientation),
     WorldObject(WorldObject),
@@ -65,10 +74,12 @@ impl Plugin for GameAssetsPlugin {
             StartupStage::PreStartup,
             Self::load_graphics.label("graphics"),
         )
+        .register_inspectable::<Graphic>()
         .add_system(update_sprite);
         //.add_system(Self::set_img_sampler_filter);
     }
 }
+//XXX Does not work if changed to graphic on another sheet
 pub fn update_sprite(
     mut update_query: Query<(&mut TextureAtlasSprite, &Graphic), Changed<Graphic>>,
     graphics: Res<Graphics>,

@@ -13,6 +13,7 @@ mod assets;
 mod canisters;
 mod debug;
 mod gas;
+mod grid;
 mod mouse;
 mod pixel_perfect_selection;
 mod player;
@@ -23,6 +24,7 @@ use ascii::AsciiPlugin;
 use assets::GameAssetsPlugin;
 use canisters::CanisterPlugin;
 use debug::DebugPlugin;
+use grid::GridPlugin;
 use mouse::{MainCamera, MousePlugin};
 use pixel_perfect_selection::PixelPerfectPlugin;
 use player::{Player, PlayerPlugin};
@@ -56,6 +58,7 @@ fn main() {
             next_state: AppState::Game,
         })
         .add_plugin(DebugPlugin)
+        .add_plugin(GridPlugin)
         .add_plugin(PixelPerfectPlugin)
         .add_plugin(MousePlugin)
         .add_plugin(CanisterPlugin)
@@ -72,8 +75,8 @@ fn spawn_camera(mut commands: Commands) {
     let mut camera = OrthographicCameraBundle::new_2d();
 
     //let size = 450.0 / 2.0;
-    //let size = 300.0 / 2.0;
-    let size = 95.0 / 2.0;
+    let size = 300.0 / 2.0;
+    //let size = 150.0 / 2.0;
 
     camera.orthographic_projection.right = size * RESOLUTION;
     camera.orthographic_projection.left = -size * RESOLUTION;

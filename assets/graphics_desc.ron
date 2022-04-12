@@ -96,5 +96,35 @@
             min: (64,64),
             max: (96,96),
         ),
+        WorldObject(Wall(None)): SpriteDesc (
+            sheet: StarterGraphics,
+            min: (96,32),
+            max: (128,64),
+        ),
+        WorldObject(Wall(One)): SpriteDesc (
+            sheet: StarterGraphics,
+            min: (128,32),
+            max: (160,64),
+        ),
+        WorldObject(Wall(Corner)): SpriteDesc (
+            sheet: StarterGraphics,
+            min: (160,32),
+            max: (192,64),
+        ),
+        WorldObject(Wall(Cross)): SpriteDesc (
+            sheet: StarterGraphics,
+            min: (192,32),
+            max: (224,64),
+        ),
+        WorldObject(Wall(T)): SpriteDesc (
+            sheet: StarterGraphics,
+            min: (224,32),
+            max: (256,64),
+        ),
+        WorldObject(Wall(All)): SpriteDesc (
+            sheet: StarterGraphics,
+            min: (224,64),
+            max: (256,96),
+        ),
     }
 )

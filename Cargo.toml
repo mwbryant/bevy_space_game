@@ -19,10 +19,14 @@ bevy = { version = "0.6", features = [
     "hdr",
     "vorbis",
     "x11",
-    "filesystem_watcher" ] }
+    "filesystem_watcher",
+    "trace"
+     ] }
 
 bevy_kira_audio = { version = "0.8", features = ["ogg", "wav"] }
 bevy-inspector-egui = "0.8"
 serde = "1.0.136"
 ron = "0.7.0"
 bevy_loading = "0.2"
+
+#cargo run --release --features bevy/trace,bevy/trace_chrome
