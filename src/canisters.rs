@@ -6,6 +6,7 @@ use crate::{
     assets::{spawn_sprite, Graphic, Graphics},
     comp_from_config,
     gas::Gas,
+    pixel_perfect_selection::Clickable,
     world_object::WorldObject,
 };
 
@@ -90,6 +91,7 @@ fn spawn_canister_machine(mut commands: Commands, graphics: Res<Graphics>) {
             "config/canister_machine.ron"
         ))
         .insert(Name::new("Machine"))
+        .insert(Clickable::default())
         .insert(Transform::from_xyz(40.0, 10.0, 300.0));
 }
 
@@ -114,6 +116,7 @@ fn spawn_canister(mut commands: Commands, graphics: Res<Graphics>) {
             percent_full: 0.50,
             gas: Gas::Hydrogen,
         })
+        .insert(Clickable::default())
         .insert(Transform::from_xyz(10.0, 10.0, 300.0))
         .insert(Name::new("Canister"))
         .add_child(label);

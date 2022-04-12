@@ -2,11 +2,16 @@
 #![allow(clippy::too_many_arguments)]
 use std::fs;
 
-use bevy::{prelude::*, render::camera::ScalingMode};
+use bevy::{
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
+    prelude::*,
+    render::camera::ScalingMode,
+};
 use bevy_loading::prelude::*;
 
 pub const CLEAR: Color = Color::rgb(0.3, 0.3, 0.3);
 pub const RESOLUTION: f32 = 16.0 / 9.0;
+pub const GRID_SIZE: usize = 100;
 
 mod ascii;
 mod assets;
@@ -24,6 +29,7 @@ use ascii::AsciiPlugin;
 use assets::GameAssetsPlugin;
 use canisters::CanisterPlugin;
 use debug::DebugPlugin;
+use gas::GasPlugin;
 use grid::GridPlugin;
 use mouse::{MainCamera, MousePlugin};
 use pixel_perfect_selection::PixelPerfectPlugin;
@@ -51,6 +57,8 @@ fn main() {
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
+        .add_plugin(LogDiagnosticsPlugin::default())
+        .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_state(AppState::Splash)
         // Add loading plugin for the splash screen
         .add_plugin(LoadingPlugin {
@@ -60,6 +68,7 @@ fn main() {
         .add_plugin(DebugPlugin)
         .add_plugin(GridPlugin)
         .add_plugin(PixelPerfectPlugin)
+        .add_plugin(GasPlugin)
         .add_plugin(MousePlugin)
         .add_plugin(CanisterPlugin)
         .add_startup_system(spawn_camera)

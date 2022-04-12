@@ -8,7 +8,7 @@ pub struct AsciiPlugin {
 #[derive(Default)]
 pub struct AsciiSheet {
     handle: Handle<TextureAtlas>,
-    tile_size: f32,
+    pub tile_size: f32,
 }
 
 #[derive(Component)]

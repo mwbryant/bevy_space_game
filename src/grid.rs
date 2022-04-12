@@ -5,9 +5,8 @@ use bevy::prelude::*;
 use crate::{
     assets::{spawn_sprite, Graphic, Graphics},
     world_object::{WallConnection, WorldObject},
+    GRID_SIZE,
 };
-
-pub const GRID_SIZE: usize = 100;
 
 #[derive(Component)]
 pub struct WallGrid {

@@ -4,6 +4,7 @@ use serde::Deserialize;
 use crate::{
     assets::{spawn_sprite, Graphic, Graphics, Orientation},
     comp_from_config,
+    pixel_perfect_selection::Clickable,
     world_object::WorldObject,
 };
 
@@ -31,6 +32,7 @@ fn spawn_terminal(mut commands: Commands, graphics: Res<Graphics>) {
     commands
         .entity(ent)
         .insert(Name::new("Terminal"))
+        .insert(Clickable::default())
         .insert(Transform::from_xyz(-32.0, 32.0, 100.0));
 
     let ent = spawn_sprite(
@@ -41,6 +43,7 @@ fn spawn_terminal(mut commands: Commands, graphics: Res<Graphics>) {
     commands
         .entity(ent)
         .insert(Name::new("Terminal"))
+        .insert(Clickable::default())
         .insert(Transform::from_xyz(32.0, -32.0, 100.0));
 
     let ent = spawn_sprite(
@@ -51,6 +54,7 @@ fn spawn_terminal(mut commands: Commands, graphics: Res<Graphics>) {
     commands
         .entity(ent)
         .insert(Name::new("Terminal"))
+        .insert(Clickable::default())
         .insert(Transform::from_xyz(-32.0, -32.0, 100.0));
 }
 
@@ -92,5 +96,6 @@ fn spawn_player(mut commands: Commands, graphics: Res<Graphics>) {
         .entity(player)
         .insert(comp_from_config!(Player))
         .insert(Transform::from_xyz(0.0, 0.0, 500.0))
+        .insert(Clickable::default())
         .insert(Name::new("Player"));
 }

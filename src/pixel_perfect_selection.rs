@@ -6,6 +6,10 @@ use crate::{
     assets::{Graphic, Graphics},
     AppState,
 };
+#[derive(Component, Default)]
+pub struct Clickable {
+    just_clicked: bool,
+}
 
 #[derive(Component)]
 pub struct PixelPerfectHitBox {
@@ -31,36 +35,40 @@ impl Plugin for PixelPerfectPlugin {
 
 //TODO handle rotations and x/y flip
 fn test_hitbox(
-    query: Query<(&GlobalTransform, &Graphic, &Name)>,
+    mut query: Query<(&GlobalTransform, &Graphic, &Name, &mut Clickable)>,
     hitboxes: Res<HitboxCache>,
     mouse: Res<MousePosition>,
+    buttons: Res<Input<MouseButton>>,
 ) {
-    let mut over_anything = false;
-    for (transform, graphic, name) in query.iter() {
-        if let Some(hit_box) = hitboxes.map.get(graphic) {
-            //x and y are centered
-            let x_offset = transform.translation.x - hit_box.width as f32 / 2.0;
-            let y_offset = transform.translation.y - hit_box.height as f32 / 2.0;
+    if buttons.just_released(MouseButton::Left) {
+        let mut over_anything = false;
+        for (transform, graphic, name, mut click) in query.iter_mut() {
+            if let Some(hit_box) = hitboxes.map.get(graphic) {
+                //x and y are centered
+                let x_offset = transform.translation.x - hit_box.width as f32 / 2.0;
+                let y_offset = transform.translation.y - hit_box.height as f32 / 2.0;
 
-            let rel_x = (mouse.0.x - x_offset) as isize;
-            let rel_y = (mouse.0.y - y_offset) as isize;
+                let rel_x = (mouse.0.x - x_offset) as isize;
+                let rel_y = (mouse.0.y - y_offset) as isize;
 
-            if rel_x >= 0
-                && rel_x < hit_box.width as isize
-                && rel_y >= 0
-                && rel_y < hit_box.height as isize
-            {
-                //invert y
-                let rel_y = hit_box.height as isize - rel_y - 1;
-                if hit_box.mask[rel_x as usize][rel_y as usize] {
-                    over_anything = true;
-                    println!("Over {}!", name.as_str());
+                if rel_x >= 0
+                    && rel_x < hit_box.width as isize
+                    && rel_y >= 0
+                    && rel_y < hit_box.height as isize
+                {
+                    //invert y
+                    let rel_y = hit_box.height as isize - rel_y - 1;
+                    if hit_box.mask[rel_x as usize][rel_y as usize] {
+                        over_anything = true;
+                        click.just_clicked = true;
+                        println!("Over {}!", name.as_str());
+                    }
                 }
             }
         }
-    }
-    if !over_anything {
-        println!("Over Nothing");
+        if !over_anything {
+            println!("Over Nothing");
+        }
     }
 }
 
