@@ -4,24 +4,39 @@ use super::{GasPlugin, WallGrid, GRID_SIZE};
 
 impl Plugin for GasPlugin {
     fn build(&self, app: &mut App) {
+        //TODO use bevy 0.7 label systems
         app.add_startup_system(spawn_gas_grid)
             .add_system(diffuse_gas_grid)
             .add_system(gas_wall_connection)
+            .add_system(heat_gas)
+            .add_system(print_total)
             .add_system(gas_clamp);
-    }
-}
-
-impl Default for Gas {
-    fn default() -> Gas {
-        Gas::None
     }
 }
 
 fn gas_clamp(mut gas_query: Query<&mut GasTile, Changed<GasTile>>) {
     for mut tile in gas_query.iter_mut() {
-        for pressure in tile.pressure.iter_mut() {
-            *pressure = pressure.clamp(0.0, 200.0);
+        for amount in tile.amount.iter_mut() {
+            *amount = amount.clamp(0.0, 200.0);
         }
+    }
+}
+
+fn print_total(mut tile_query: Query<&mut GasTile>, grid_query: Query<&GasGrid>) {
+    let grid = grid_query.iter().next().unwrap();
+    let mut total = 0.0;
+    for tile in grid.grid.iter().flatten() {
+        let mut tile = tile_query.get_mut(*tile).unwrap();
+        total += tile.amount[1];
+    }
+    println!("Total {}", total);
+}
+
+fn heat_gas(mut tile_query: Query<&mut GasTile>, grid_query: Query<&GasGrid>, time: Res<Time>) {
+    if time.time_since_startup().as_secs() < 5 {
+        let grid = grid_query.iter().next();
+        let mut tile = tile_query.get_mut(grid.unwrap().grid[25][25]).unwrap();
+        tile.temperature += 10.0;
     }
 }
 
@@ -38,7 +53,39 @@ fn gas_wall_connection(mut gas_query: Query<&mut GasGrid>, wall_query: Query<&Wa
     }
 }
 
-fn diffuse(
+//XXX does temp diffuse based on the material...
+fn diffuse_temperature(
+    i: usize,
+    j: usize,
+    x0: &[[GasTile; GRID_SIZE]; GRID_SIZE],
+    x: &mut [[GasTile; GRID_SIZE]; GRID_SIZE],
+    wall_mask: &[[bool; GRID_SIZE]; GRID_SIZE],
+    a: f64,
+) {
+    let up_wall = j == 0 || wall_mask[i][j - 1];
+    let down_wall = j == GRID_SIZE - 1 || wall_mask[i][j + 1];
+    let left_wall = i == 0 || wall_mask[i - 1][j];
+    let right_wall = i == GRID_SIZE - 1 || wall_mask[i + 1][j];
+    let wall_count =
+        !up_wall as isize + !down_wall as isize + !left_wall as isize + !right_wall as isize;
+    let mut new_x = x0[i][j].temperature;
+    if !left_wall {
+        new_x += a * x[i - 1][j].temperature;
+    }
+    if !right_wall {
+        new_x += a * x[i + 1][j].temperature;
+    }
+    if !up_wall {
+        new_x += a * x[i][j - 1].temperature;
+    }
+    if !down_wall {
+        new_x += a * x[i][j + 1].temperature;
+    }
+    new_x /= 1.0 + wall_count as f64 * a;
+    x[i][j].temperature = new_x;
+}
+
+fn diffuse_moles(
     i: usize,
     j: usize,
     x0: &[[GasTile; GRID_SIZE]; GRID_SIZE],
@@ -53,21 +100,21 @@ fn diffuse(
     let right_wall = i == GRID_SIZE - 1 || wall_mask[i + 1][j];
     let wall_count =
         !up_wall as isize + !down_wall as isize + !left_wall as isize + !right_wall as isize;
-    let mut new_x = x0[i][j].pressure[gas];
+    let mut new_x = x0[i][j].amount[gas];
     if !left_wall {
-        new_x += a * x[i - 1][j].pressure[gas];
+        new_x += a * x[i - 1][j].amount[gas];
     }
     if !right_wall {
-        new_x += a * x[i + 1][j].pressure[gas];
+        new_x += a * x[i + 1][j].amount[gas];
     }
     if !up_wall {
-        new_x += a * x[i][j - 1].pressure[gas];
+        new_x += a * x[i][j - 1].amount[gas];
     }
     if !down_wall {
-        new_x += a * x[i][j + 1].pressure[gas];
+        new_x += a * x[i][j + 1].amount[gas];
     }
     new_x /= 1.0 + wall_count as f64 * a;
-    *x[i][j].pressure.get_mut(gas).unwrap() = new_x;
+    *x[i][j].amount.get_mut(gas).unwrap() = new_x;
 }
 
 //TODO optimize, grids probably dont need be all the same massive size, maybe map is many smaller grids with interfaces
@@ -89,12 +136,24 @@ fn diffuse_gas_grid(
             }
         }
 
-        let a = time.delta_seconds() as f64 * 0.003 * (GRID_SIZE * GRID_SIZE) as f64;
-        for _k in 0..40 {
+        let a = time.delta_seconds() as f64 * 0.0003 * (GRID_SIZE * GRID_SIZE) as f64;
+        for _k in 0..30 {
+            for i in 0..(GRID_SIZE) {
+                for j in 0..(GRID_SIZE) {
+                    diffuse_temperature(i, j, &x0, &mut x, &grid.wall_mask, a);
+                }
+            }
+        }
+
+        let a = time.delta_seconds() as f64 * 0.00001 * (GRID_SIZE * GRID_SIZE) as f64;
+        for _k in 0..30 {
             for i in 0..(GRID_SIZE) {
                 for j in 0..(GRID_SIZE) {
                     for gas in 0..GAS_COUNT {
-                        diffuse(i, j, &x0, &mut x, &grid.wall_mask, a, gas);
+                        //diffuse faster at higher temps
+                        //not exactly physically accurate but sqrts would suck here and its a game..
+                        let rate = a * x[i][j].temperature;
+                        diffuse_moles(i, j, &x0, &mut x, &grid.wall_mask, rate, gas);
                     }
                 }
             }
@@ -104,13 +163,13 @@ fn diffuse_gas_grid(
         for i in 0..GRID_SIZE {
             for j in 0..GRID_SIZE {
                 let (mut gas, mut sprite) = tile_query.get_mut(grid.grid[i][j]).unwrap();
-                gas.pressure = x[i][j].pressure;
+                gas.amount = x[i][j].amount;
+                gas.temperature = x[i][j].temperature;
                 if !grid.wall_mask[i][j] {
                     sprite.color = Color::rgba(
-                        (x[i][j].pressure[Gas::Oxygen as usize] as f32 / 100.0).clamp(0.0, 1.0),
-                        (x[i][j].pressure[Gas::Nitrogen as usize] as f32 / 100.0).clamp(0.0, 1.0),
-                        (x[i][j].pressure[Gas::CarbonDioxide as usize] as f32 / 100.0)
-                            .clamp(0.0, 1.0),
+                        (gas.amount[Gas::Oxygen as usize] as f32 / 83.0).clamp(0.0, 1.0),
+                        (gas.amount[Gas::Nitrogen as usize] as f32 / 83.0).clamp(0.0, 1.0),
+                        (gas.amount[Gas::CarbonDioxide as usize] as f32 / 83.0).clamp(0.0, 1.0),
                         0.25,
                     );
                 } else {
@@ -142,9 +201,11 @@ fn spawn_gas_grid(mut commands: Commands, ascii: Res<AsciiSheet>) {
                 ),
                 Vec3::splat(1.0),
             );
-            let mut gas = GasTile::default();
-            gas.pressure[Gas::Oxygen as usize] = 100.0;
-            gas.pressure[Gas::Nitrogen as usize] = 20.0;
+            let gas = GasTile {
+                //https://www.discovermagazine.com/the-sciences/how-cold-is-it-in-outer-space
+                temperature: 2.7,
+                ..Default::default()
+            };
             gas_grid.grid[x][y] = commands.entity(sprite).insert(gas).id()
         }
     }

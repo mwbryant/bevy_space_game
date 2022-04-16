@@ -43,12 +43,18 @@ fn player_breath(
 
     let mut tile = tile_query.get_mut(tile).unwrap();
     let to_breath = (player.breath_rate * time.delta_seconds()) as f64;
-    if to_breath < tile.pressure[Gas::Oxygen as usize] {
-        tile.pressure[Gas::Oxygen as usize] -= to_breath;
-        tile.pressure[Gas::CarbonDioxide as usize] += to_breath;
+    println!(
+        "Player gas {:.2}, {:.2}, {:.2}",
+        tile.temperature,
+        tile.amount[1],
+        tile.get_pressure(Gas::Oxygen)
+    );
+    if to_breath < tile.amount[Gas::Oxygen as usize] {
+        tile.amount[Gas::Oxygen as usize] -= to_breath;
+        tile.amount[Gas::CarbonDioxide as usize] += to_breath;
     } else {
-        tile.pressure[Gas::CarbonDioxide as usize] += tile.pressure[Gas::Oxygen as usize];
-        tile.pressure[Gas::Oxygen as usize] = 0.0;
+        tile.amount[Gas::CarbonDioxide as usize] += tile.amount[Gas::Oxygen as usize];
+        tile.amount[Gas::Oxygen as usize] = 0.0;
         println!("Player suffocating!");
     }
 }

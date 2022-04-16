@@ -10,7 +10,7 @@ opt-level = 1
 opt-level = 3
 
 [dependencies]
-bevy = { version = "0.6", features = [
+bevy = { version = "0.7", features = [
     "dynamic",  
     "bevy_gilrs",
     "bevy_winit",
@@ -23,8 +23,8 @@ bevy = { version = "0.6", features = [
     "trace"
      ] }
 
-bevy_kira_audio = { version = "0.8", features = ["ogg", "wav"] }
-bevy-inspector-egui = "0.8"
+bevy_kira_audio = { version = "0.9", features = ["ogg", "wav"] }
+bevy-inspector-egui = "0.10"
 serde = "1.0.136"
 ron = "0.7.0"
 bevy_loading = "0.2"

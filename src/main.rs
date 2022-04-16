@@ -63,7 +63,13 @@ fn main() {
         .add_plugin(PlayerPlugin)
         .add_system(save_game)
         .add_system(load_game)
+        //.add_system(slow_down)
         .run();
+}
+
+#[allow(dead_code)]
+fn slow_down() {
+    std::thread::sleep(std::time::Duration::from_secs_f32(0.100));
 }
 
 fn spawn_camera(mut commands: Commands) {

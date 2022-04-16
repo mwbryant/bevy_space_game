@@ -8,7 +8,8 @@ use super::{Wall, WallGrid, WallPlugin, GRID_SIZE};
 
 impl Plugin for WallPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(spawn_walls)
+        //Need grid to exist to populate it with air
+        app.add_startup_system_to_stage(StartupStage::PostStartup, spawn_walls)
             .add_system_to_stage(CoreStage::PostUpdate, wall_update)
             .add_system(mouse_create_wall);
     }
@@ -74,7 +75,22 @@ fn create_room(
     y_offset: usize,
     width: usize,
     height: usize,
+
+    tile_query: &mut Query<&mut GasTile>,
+    grid_query: &Query<&GasGrid>,
 ) {
+    let gas_grid = grid_query.single();
+    println!("Creating room");
+    for x in 1..(width - 1) {
+        for y in 1..(height - 1) {
+            let mut tile = tile_query
+                .get_mut(gas_grid.grid[x + x_offset][y + y_offset])
+                .unwrap();
+            tile.temperature = 293.0;
+            tile.amount[Gas::Oxygen as usize] = 83.0;
+        }
+    }
+
     let y1 = 0;
     let y2 = height - 1;
     for x in 0..width {
@@ -90,12 +106,25 @@ fn create_room(
     }
 }
 
-fn spawn_walls(mut commands: Commands) {
+fn spawn_walls(
+    mut commands: Commands,
+    mut tile_query: Query<&mut GasTile>,
+    grid_query: Query<&GasGrid>,
+) {
     let mut grid = WallGrid {
         tile_size: 32.0,
         walls: [[None; GRID_SIZE]; GRID_SIZE],
     };
-    create_room(&mut commands, &mut grid, 20, 20, 9, 9);
+    create_room(
+        &mut commands,
+        &mut grid,
+        20,
+        20,
+        10,
+        10,
+        &mut tile_query,
+        &grid_query,
+    );
 
     let mut to_add: Vec<Entity> = Vec::new();
     //Janky but I cant work out the iterator over Optional

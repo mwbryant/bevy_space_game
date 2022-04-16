@@ -6,8 +6,10 @@ mod gas;
 mod wall;
 
 pub const GRID_SIZE: usize = 50;
-pub const GAS_COUNT: usize = 7;
+pub const IDEAL_GAS_CONST: f64 = 8.314462618153 /* m^3*Pa/K*mol */ * (1.0/101325.0); //atm/Pa
+pub const TILE_VOLUME: f64 = 2.0; // m^3
 
+pub const GAS_COUNT: usize = 7;
 #[derive(Inspectable, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Gas {
     None = 0,
@@ -19,9 +21,23 @@ pub enum Gas {
     WaterVapor,
 }
 
+impl Default for Gas {
+    fn default() -> Gas {
+        Gas::None
+    }
+}
+
 #[derive(Component, Clone, Copy, Default)]
 pub struct GasTile {
-    pub pressure: [f64; GAS_COUNT],
+    pub amount: [f64; GAS_COUNT],
+    pub temperature: f64,
+}
+
+impl GasTile {
+    #[allow(dead_code)]
+    pub fn get_pressure(&self, gas: Gas) -> f64 {
+        self.amount[gas as usize] * self.temperature * IDEAL_GAS_CONST / TILE_VOLUME
+    }
 }
 
 #[derive(Component)]
