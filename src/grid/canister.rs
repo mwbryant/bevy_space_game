@@ -1,3 +1,4 @@
+//TODO create a gas module and move canister there
 use bevy_inspector_egui::RegisterInspectable;
 
 use crate::{grid::CanisterPlugin, prelude::*};
@@ -12,6 +13,7 @@ impl Plugin for CanisterPlugin {
     }
 }
 
+//TODO move to graphics module
 #[derive(Component, Default)]
 struct Label {
     id: usize,
