@@ -1,32 +1,14 @@
-use bevy::{prelude::*, utils::HashMap};
-use bevy_inspector_egui::{egui::Grid, Inspectable, RegisterInspectable};
-use serde::Deserialize;
+use crate::prelude::*;
 
-use crate::{
-    ascii::{spawn_ascii_sprite, AsciiSheet},
-    GRID_SIZE,
-};
-
-pub struct GasPlugin;
+use super::{GasPlugin, WallGrid, GRID_SIZE};
 
 impl Plugin for GasPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(spawn_gas_grid)
             .add_system(diffuse_gas_grid)
-            .add_system(breach);
+            .add_system(gas_wall_connection)
+            .add_system(gas_clamp);
     }
-}
-
-pub const GAS_COUNT: usize = 7;
-#[derive(Inspectable, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Gas {
-    None,
-    Oxygen,
-    Nitrogen,
-    CarbonDioxide,
-    Helium3,
-    Hydrogen,
-    WaterVapor,
 }
 
 impl Default for Gas {
@@ -35,15 +17,25 @@ impl Default for Gas {
     }
 }
 
-#[derive(Component, Clone, Copy, Default)]
-pub struct GasTile {
-    pressure: [f64; GAS_COUNT],
+fn gas_clamp(mut gas_query: Query<&mut GasTile, Changed<GasTile>>) {
+    for mut tile in gas_query.iter_mut() {
+        for pressure in tile.pressure.iter_mut() {
+            *pressure = pressure.clamp(0.0, 200.0);
+        }
+    }
 }
 
-#[derive(Component)]
-pub struct GasGrid {
-    grid: [[Entity; GRID_SIZE]; GRID_SIZE],
-    wall_mask: [[bool; GRID_SIZE]; GRID_SIZE],
+fn gas_wall_connection(mut gas_query: Query<&mut GasGrid>, wall_query: Query<&WallGrid>) {
+    //TODO handle multi grids/walls
+    //maybe a struct linking the 2
+    //gas grids should be made by or from wall grid
+    let walls = wall_query.single();
+    let mut grid = gas_query.single_mut();
+    for (i, row) in walls.walls.iter().enumerate() {
+        for (j, ent) in row.iter().enumerate() {
+            grid.wall_mask[i][j] = ent.is_some();
+        }
+    }
 }
 
 fn diffuse(
@@ -77,15 +69,6 @@ fn diffuse(
     new_x /= 1.0 + wall_count as f64 * a;
     *x[i][j].pressure.get_mut(gas).unwrap() = new_x;
 }
-fn breach(mut tile_query: Query<&mut GasTile>, grid_query: Query<&GasGrid>, time: Res<Time>) {
-    let grid = grid_query.single();
-    let mut tile = tile_query.get_mut(grid.grid[50][50]).unwrap();
-    if time.seconds_since_startup() < 15.0 {
-        tile.pressure[Gas::Oxygen as usize] -= 2000.0 * time.delta_seconds() as f64;
-        tile.pressure[Gas::Oxygen as usize] =
-            tile.pressure[Gas::Oxygen as usize].clamp(0.0, 1000000.0);
-    }
-}
 
 //TODO optimize, grids probably dont need be all the same massive size, maybe map is many smaller grids with interfaces
 //Thanks Jos Stam! http://graphics.cs.cmu.edu/nsp/course/15-464/Fall09/papers/StamFluidforGames.pdf
@@ -106,8 +89,8 @@ fn diffuse_gas_grid(
             }
         }
 
-        let a = time.delta_seconds() as f64 * 0.0005 * (GRID_SIZE * GRID_SIZE) as f64;
-        for _k in 0..30 {
+        let a = time.delta_seconds() as f64 * 0.003 * (GRID_SIZE * GRID_SIZE) as f64;
+        for _k in 0..40 {
             for i in 0..(GRID_SIZE) {
                 for j in 0..(GRID_SIZE) {
                     for gas in 0..GAS_COUNT {
@@ -117,18 +100,6 @@ fn diffuse_gas_grid(
             }
         }
 
-        //let mut total = 0.0;
-        //#[allow(clippy::needless_range_loop)]
-        //for i in 0..GRID_SIZE {
-        //for j in 0..GRID_SIZE {
-        //total += x[i][j].pressure;
-        //}
-        //}
-        println!(
-            "{} {}",
-            x[50][50].pressure[Gas::Oxygen as usize],
-            x[50][50].pressure[Gas::Nitrogen as usize]
-        );
         #[allow(clippy::needless_range_loop)]
         for i in 0..GRID_SIZE {
             for j in 0..GRID_SIZE {
@@ -137,13 +108,13 @@ fn diffuse_gas_grid(
                 if !grid.wall_mask[i][j] {
                     sprite.color = Color::rgba(
                         (x[i][j].pressure[Gas::Oxygen as usize] as f32 / 100.0).clamp(0.0, 1.0),
+                        (x[i][j].pressure[Gas::Nitrogen as usize] as f32 / 100.0).clamp(0.0, 1.0),
                         (x[i][j].pressure[Gas::CarbonDioxide as usize] as f32 / 100.0)
                             .clamp(0.0, 1.0),
-                        (x[i][j].pressure[Gas::Nitrogen as usize] as f32 / 100.0).clamp(0.0, 1.0),
-                        1.0,
+                        0.25,
                     );
                 } else {
-                    sprite.color = Color::rgba(0.1, 0.1, 0.1, 1.0);
+                    sprite.color = Color::rgba(0.1, 0.1, 0.1, 0.8);
                 }
             }
         }
@@ -155,6 +126,7 @@ fn spawn_gas_grid(mut commands: Commands, ascii: Res<AsciiSheet>) {
         //XXX find a better default entity
         grid: [[Entity::from_raw(0); GRID_SIZE]; GRID_SIZE],
         wall_mask: [[false; GRID_SIZE]; GRID_SIZE],
+        tile_size: 32.0,
     };
     for x in 0..GRID_SIZE {
         for y in 0..GRID_SIZE {
@@ -163,47 +135,30 @@ fn spawn_gas_grid(mut commands: Commands, ascii: Res<AsciiSheet>) {
                 &ascii,
                 0,
                 Color::rgba(0.9, 0.1, 0.1, 0.10),
-                Vec3::new(x as f32 * 2.0, y as f32 * 2.0, 900.0),
-                Vec3::splat(1.0 / 16.0),
+                Vec3::new(
+                    x as f32 * gas_grid.tile_size,
+                    y as f32 * gas_grid.tile_size,
+                    900.0,
+                ),
+                Vec3::splat(1.0),
             );
             let mut gas = GasTile::default();
             gas.pressure[Gas::Oxygen as usize] = 100.0;
-            gas.pressure[Gas::Nitrogen as usize] = 60.0;
+            gas.pressure[Gas::Nitrogen as usize] = 20.0;
             gas_grid.grid[x][y] = commands.entity(sprite).insert(gas).id()
-        }
-    }
-    for y in 0..GRID_SIZE {
-        gas_grid.wall_mask[30][y] = true;
-        commands
-            .entity(gas_grid.grid[30][y])
-            .insert(GasTile::default());
-        gas_grid.wall_mask[60][y] = true;
-        commands
-            .entity(gas_grid.grid[60][y])
-            .insert(GasTile::default());
-    }
-    gas_grid.wall_mask[60][50] = false;
-    for x in 25..75 {
-        for y in 40..45 {
-            gas_grid.wall_mask[x][y] = true;
-            commands
-                .entity(gas_grid.grid[x][y])
-                .insert(GasTile::default());
-        }
-        for y in 60..70 {
-            gas_grid.wall_mask[x][y] = true;
-            commands
-                .entity(gas_grid.grid[x][y])
-                .insert(GasTile::default());
         }
     }
 
     let children: Vec<Entity> = gas_grid.grid.iter().flatten().copied().collect();
     commands
         .spawn()
-        .insert(gas_grid)
         .push_children(&children)
-        .insert(Transform::from_xyz(-100.0, -100.0, 0.0))
+        .insert(Transform::from_xyz(
+            -(GRID_SIZE as f32 * gas_grid.tile_size) / 2.0,
+            -(GRID_SIZE as f32 * gas_grid.tile_size) / 2.0,
+            0.0,
+        ))
+        .insert(gas_grid)
         .insert(GlobalTransform::default())
         .insert(Name::new("Gas Grid"));
 }

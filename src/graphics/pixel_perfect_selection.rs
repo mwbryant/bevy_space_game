@@ -1,29 +1,15 @@
 use bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb;
 use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 
+use super::Graphics;
+use super::{Graphic, PixelPerfectPlugin};
 use crate::mouse::MousePosition;
-use crate::{
-    assets::{Graphic, Graphics},
-    AppState,
-};
-#[derive(Component, Default)]
-pub struct Clickable {
-    just_clicked: bool,
-}
-
-#[derive(Component)]
-pub struct PixelPerfectHitBox {
-    width: usize,
-    height: usize,
-    mask: Vec<Vec<bool>>,
-}
+use crate::{prelude::*, AppState};
 
 #[derive(Default)]
-pub struct HitboxCache {
+struct HitboxCache {
     map: HashMap<Graphic, PixelPerfectHitBox>,
 }
-
-pub struct PixelPerfectPlugin;
 
 impl Plugin for PixelPerfectPlugin {
     fn build(&self, app: &mut App) {
@@ -95,7 +81,7 @@ fn create_hitbox_cache(
 }
 
 //TODO support fliped images
-pub fn add_graphic_to_hitboxes(
+fn add_graphic_to_hitboxes(
     cache: &mut HitboxCache,
     graphic: &Graphic,
     min: Vec2,

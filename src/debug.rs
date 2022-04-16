@@ -1,15 +1,10 @@
 use bevy::prelude::*;
-use bevy_inspector_egui::{RegisterInspectable, WorldInspectorPlugin};
-
-use crate::gas::Gas;
+use bevy_inspector_egui::WorldInspectorPlugin;
 
 pub struct DebugPlugin;
 
 impl Plugin for DebugPlugin {
     fn build(&self, app: &mut App) {
-        //if cfg!(debug_assertions) {
-        app.add_plugin(WorldInspectorPlugin::new())
-            .register_inspectable::<Gas>();
-        //}
+        app.add_plugin(WorldInspectorPlugin::new());
     }
 }

@@ -1,3 +1,4 @@
 (
-    move_speed: 64.0
+    move_speed: 64.0,
+    breath_rate: 100.0,
 )

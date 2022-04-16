@@ -1,16 +1,6 @@
-use bevy::prelude::*;
-use bevy_inspector_egui::{Inspectable, RegisterInspectable};
-use serde::Deserialize;
+use bevy_inspector_egui::RegisterInspectable;
 
-use crate::{
-    assets::{spawn_sprite, Graphic, Graphics},
-    comp_from_config,
-    gas::Gas,
-    pixel_perfect_selection::Clickable,
-    world_object::WorldObject,
-};
-
-pub struct CanisterPlugin;
+use crate::{grid::CanisterPlugin, prelude::*};
 
 impl Plugin for CanisterPlugin {
     fn build(&self, app: &mut App) {
@@ -20,18 +10,6 @@ impl Plugin for CanisterPlugin {
             .register_inspectable::<Canister>()
             .register_inspectable::<CanisterMachine>();
     }
-}
-
-#[derive(Component, Default, Inspectable, Deserialize)]
-//TODO mols, temp, pressure
-pub struct Canister {
-    percent_full: f32,
-    gas: Gas,
-}
-
-#[derive(Component, Deserialize, Default, Inspectable)]
-pub struct CanisterMachine {
-    canisters: [Canister; 4],
 }
 
 #[derive(Component, Default)]
@@ -65,23 +43,19 @@ fn update_canister_graphics(
     }
 }
 
-fn spawn_canister_machine(mut commands: Commands, graphics: Res<Graphics>) {
-    let ent = spawn_sprite(
-        &mut commands,
-        &graphics,
-        Graphic::WorldObject(WorldObject::CanisterMachine),
-    );
+fn spawn_canister_machine(mut commands: Commands) {
+    let ent = commands
+        .spawn()
+        .insert(Graphic::WorldObject(WorldObject::CanisterMachine))
+        .id();
     let x_values = [-10.5, -3.5, 3.5, 10.5];
     for (i, x) in x_values.iter().enumerate() {
-        let label = spawn_sprite(
-            &mut commands,
-            &graphics,
-            Graphic::WorldObject(WorldObject::SmallLabel(0)),
-        );
-        commands
-            .entity(label)
+        let label = commands
+            .spawn()
+            .insert(Graphic::WorldObject(WorldObject::SmallLabel(0)))
             .insert(Label { id: i, states: 8 })
-            .insert(Transform::from_xyz(*x, 4.5, 0.01));
+            .insert(Transform::from_xyz(*x, 4.5, 0.01))
+            .id();
         commands.entity(ent).add_child(label);
     }
     commands
@@ -95,17 +69,15 @@ fn spawn_canister_machine(mut commands: Commands, graphics: Res<Graphics>) {
         .insert(Transform::from_xyz(40.0, 10.0, 300.0));
 }
 
-fn spawn_canister(mut commands: Commands, graphics: Res<Graphics>) {
-    let ent = spawn_sprite(
-        &mut commands,
-        &graphics,
-        Graphic::WorldObject(WorldObject::Canister),
-    );
-    let label = spawn_sprite(
-        &mut commands,
-        &graphics,
-        Graphic::WorldObject(WorldObject::SmallLabel(0)),
-    );
+fn spawn_canister(mut commands: Commands) {
+    let ent = commands
+        .spawn()
+        .insert(Graphic::WorldObject(WorldObject::Canister))
+        .id();
+    let label = commands
+        .spawn()
+        .insert(Graphic::WorldObject(WorldObject::SmallLabel(0)))
+        .id();
     commands
         .entity(label)
         .insert(Label { id: 0, states: 8 })

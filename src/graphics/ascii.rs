@@ -1,29 +1,7 @@
 #![allow(dead_code)]
-use bevy::prelude::*;
+use crate::prelude::*;
 
-pub struct AsciiPlugin {
-    pub tile_size: f32,
-}
-
-#[derive(Default)]
-pub struct AsciiSheet {
-    handle: Handle<TextureAtlas>,
-    pub tile_size: f32,
-}
-
-#[derive(Component)]
-pub struct AsciiText;
-
-#[derive(Copy, Clone)]
-pub struct NineSliceIndices {
-    center: usize,
-    upper_left_index: usize,
-    upper_right_index: usize,
-    lower_left_index: usize,
-    lower_right_index: usize,
-    horizontal_index: usize,
-    vertical_index: usize,
-}
+use super::AsciiPlugin;
 
 impl Plugin for AsciiPlugin {
     fn build(&self, app: &mut App) {

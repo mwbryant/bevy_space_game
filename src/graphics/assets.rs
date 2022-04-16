@@ -1,39 +1,12 @@
+use crate::prelude::*;
+
+use bevy_inspector_egui::RegisterInspectable;
+use bevy_loading::prelude::AssetsLoading;
 use std::fs;
 
-use bevy::prelude::*;
-use bevy::reflect::erased_serde::private::serde::Deserialize;
-use bevy::utils::HashMap;
-use bevy_inspector_egui::{Inspectable, RegisterInspectable};
-use bevy_loading::prelude::AssetsLoading;
-use serde::Serialize;
-
-use crate::world_object::WorldObject;
 use ron::de::from_str;
 
-pub struct GameAssetsPlugin;
-
-#[derive(Inspectable, Deserialize, Serialize, Hash, Debug, PartialEq, Eq, Clone, Copy)]
-pub enum Orientation {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
-impl Default for Orientation {
-    fn default() -> Self {
-        Orientation::Down
-    }
-}
-
-//FIXME Graphics and Graphic are too confusing of names
-#[derive(
-    Inspectable, Component, Deserialize, Serialize, Hash, Debug, PartialEq, Eq, Clone, Copy,
-)]
-pub enum Graphic {
-    Player(Orientation),
-    WorldObject(WorldObject),
-}
+use super::{GameAssetsPlugin, Graphics};
 
 //All sheets in the assets
 #[derive(Clone, Copy, Debug, Reflect, Deserialize, PartialEq, Eq, Hash)]
@@ -42,28 +15,9 @@ pub enum SpriteSheet {
     StarterGraphics,
 }
 
-//Entry on the ron sheet description
-#[derive(Clone, Copy, Debug, Reflect, Deserialize)]
-pub struct SpriteDesc {
-    pub sheet: SpriteSheet,
-    pub min: Vec2,
-    pub max: Vec2,
-    #[serde(default)]
-    flip_x: bool,
-    #[serde(default)]
-    flip_y: bool,
-}
-
-//Resource holding all handles and indices
-//XXX Make sure the performance isn't trash...
-pub struct Graphics {
-    pub handle_map: HashMap<SpriteSheet, Handle<TextureAtlas>>,
-    pub graphics_map: HashMap<Graphic, (SpriteDesc, usize)>,
-}
-
 //Format to be loaded from ron
 #[derive(Deserialize)]
-pub struct GraphicsDesc {
+struct GraphicsDesc {
     sheet_filename_map: HashMap<SpriteSheet, String>,
     graphics_map: HashMap<Graphic, SpriteDesc>,
 }
@@ -75,12 +29,14 @@ impl Plugin for GameAssetsPlugin {
             Self::load_graphics.label("graphics"),
         )
         .register_inspectable::<Graphic>()
+        .add_system_to_stage(CoreStage::PreUpdate, spawn_sprite)
         .add_system(update_sprite);
         //.add_system(Self::set_img_sampler_filter);
     }
 }
+
 //XXX Does not work if changed to graphic on another sheet
-pub fn update_sprite(
+fn update_sprite(
     mut update_query: Query<(&mut TextureAtlasSprite, &Graphic), Changed<Graphic>>,
     graphics: Res<Graphics>,
 ) {
@@ -96,33 +52,33 @@ pub fn update_sprite(
     }
 }
 
-pub fn spawn_sprite(commands: &mut Commands, res: &Graphics, to_spawn: Graphic) -> Entity {
-    if let Some((desc, index)) = res.graphics_map.get(&to_spawn) {
-        let mut sprite = TextureAtlasSprite::new(*index);
-        sprite.flip_x = desc.flip_x;
-        sprite.flip_y = desc.flip_y;
-        let atlas = &res.handle_map[&desc.sheet];
-        commands
-            .spawn_bundle(SpriteSheetBundle {
+fn spawn_sprite(
+    mut commands: Commands,
+    res: Res<Graphics>,
+    graphics_to_spawn: Query<(Entity, &Graphic, Option<&Transform>), Without<TextureAtlasSprite>>,
+) {
+    for (ent, to_spawn, transform) in graphics_to_spawn.iter() {
+        if let Some((desc, index)) = res.graphics_map.get(to_spawn) {
+            let mut sprite = TextureAtlasSprite::new(*index);
+            sprite.flip_x = desc.flip_x;
+            sprite.flip_y = desc.flip_y;
+            let atlas = &res.handle_map[&desc.sheet];
+            commands.entity(ent).insert_bundle(SpriteSheetBundle {
                 sprite: sprite,
                 texture_atlas: atlas.clone(),
-                transform: Transform {
-                    ..Default::default()
-                },
+                transform: *transform.unwrap_or(&Transform::default()),
                 ..Default::default()
-            })
-            .insert(to_spawn)
-            .id()
-    } else {
-        error!(
-            "Failed to load sprite for {:?}, missing in graphics_desc.ron?",
-            to_spawn
-        );
-        commands
-            .spawn()
-            .insert(Transform::default())
-            .insert(GlobalTransform::default())
-            .id()
+            });
+        } else {
+            error!(
+                "Failed to load sprite for {:?}, missing in graphics_desc.ron?",
+                to_spawn
+            );
+            commands
+                .entity(ent)
+                .insert(*transform.unwrap_or(&Transform::default()))
+                .insert(GlobalTransform::default());
+        }
     }
 }
 
