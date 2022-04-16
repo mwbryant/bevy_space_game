@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 use bevy_inspector_egui::RegisterInspectable;
-use bevy_loading::prelude::AssetsLoading;
+//use bevy_loading::prelude::AssetsLoading;
 use std::fs;
 
 use ron::de::from_str;
@@ -87,7 +87,7 @@ impl GameAssetsPlugin {
         mut commands: Commands,
         assets: Res<AssetServer>,
         mut texture_assets: ResMut<Assets<TextureAtlas>>,
-        mut loading: ResMut<AssetsLoading>,
+        //mut loading: ResMut<AssetsLoading>,
     ) {
         let sprite_desc = fs::read_to_string("assets/graphics_desc.ron").unwrap();
 
@@ -103,7 +103,7 @@ impl GameAssetsPlugin {
         let mut atlas_map = HashMap::default();
         for (sheet, file_name) in sprite_desc.sheet_filename_map.iter() {
             let image_handle = assets.load(file_name);
-            loading.add(&image_handle);
+            //loading.add(&image_handle);
             //FIXME image size should either come from loaded image or from desc ron
             let atlas = TextureAtlas::new_empty(image_handle, Vec2::splat(256.0));
             atlas_map.insert(*sheet, atlas);

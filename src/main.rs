@@ -6,8 +6,9 @@ use bevy::{
     diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     prelude::*,
     render::camera::ScalingMode,
+    window::PresentMode,
 };
-use bevy_loading::prelude::*;
+//use bevy_loading::prelude::*;
 
 pub const CLEAR: Color = Color::rgb(0.3, 0.3, 0.3);
 pub const RESOLUTION: f32 = 16.0 / 9.0;
@@ -42,7 +43,7 @@ fn main() {
             width: height * RESOLUTION,
             height: height,
             title: "Bevy Space Game".to_string(),
-            vsync: true,
+            present_mode: PresentMode::Fifo,
             resizable: false,
             ..Default::default()
         })
@@ -52,12 +53,12 @@ fn main() {
         .add_plugins(GraphicsPluginGroup)
         .add_plugin(LogDiagnosticsPlugin::default())
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
-        .add_state(AppState::Splash)
+        .add_state(AppState::Game)
         // Add loading plugin for the splash screen
-        .add_plugin(LoadingPlugin {
-            loading_state: AppState::Splash,
-            next_state: AppState::Game,
-        })
+        //.add_plugin(LoadingPlugin {
+        //loading_state: AppState::Splash,
+        //next_state: AppState::Game,
+        //})
         .add_plugin(MousePlugin)
         .add_startup_system(spawn_camera)
         .add_plugin(PlayerPlugin)

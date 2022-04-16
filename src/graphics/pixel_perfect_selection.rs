@@ -13,7 +13,7 @@ struct HitboxCache {
 
 impl Plugin for PixelPerfectPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set(SystemSet::on_enter(AppState::Game).with_system(create_hitbox_cache))
+        app.add_system(create_hitbox_cache)
             .insert_resource(HitboxCache::default())
             .add_system(test_hitbox);
     }
@@ -64,20 +64,27 @@ fn create_hitbox_cache(
     server: Res<AssetServer>,
     atlas_assets: Res<Assets<TextureAtlas>>,
     image_assets: Res<Assets<Image>>,
+    mut cache: ResMut<HitboxCache>,
+    // https://bevy-cheatbook.github.io/assets/assetevent.html
+    mut ev_asset: EventReader<AssetEvent<Image>>,
 ) {
-    let mut cache = HitboxCache::default();
-    for (graphic, (desc, _)) in graphics.graphics_map.iter() {
-        let atlas_handle = graphics.handle_map[&desc.sheet].clone();
-        let texture = atlas_assets.get(atlas_handle).unwrap().texture.clone();
+    for ev in ev_asset.iter() {
+        if let AssetEvent::Modified { handle: texture } = ev {
+            for (graphic, (desc, _)) in graphics.graphics_map.iter() {
+                let atlas_handle = graphics.handle_map[&desc.sheet].clone();
+                let desc_texture = atlas_assets.get(atlas_handle).unwrap().texture.clone();
 
-        if server.get_load_state(texture.clone()) == LoadState::Loaded {
-            let image = image_assets.get(texture).unwrap();
-            add_graphic_to_hitboxes(&mut cache, graphic, desc.min, desc.max, image);
-        } else {
-            println!("Not Loaded");
+                if desc_texture == *texture {
+                    if server.get_load_state(texture.clone()) == LoadState::Loaded {
+                        let image = image_assets.get(texture).unwrap();
+                        add_graphic_to_hitboxes(&mut cache, graphic, desc.min, desc.max, image);
+                    } else {
+                        println!("Not Loaded");
+                    }
+                }
+            }
         }
     }
-    commands.insert_resource(cache);
 }
 
 //TODO support fliped images
