@@ -1,4 +1,7 @@
-use bevy::render::camera::Camera2d;
+use bevy::{
+    render::camera::Camera2d,
+    sprite::collide_aabb::{collide, Collision},
+};
 use bevy_inspector_egui::{Inspectable, RegisterInspectable};
 use serde::Deserialize;
 
@@ -8,6 +11,7 @@ use crate::prelude::*;
 pub struct Player {
     move_speed: f32,
     breath_rate: f32,
+    hitbox: Vec2,
 }
 
 pub struct PlayerPlugin;
@@ -18,8 +22,43 @@ impl Plugin for PlayerPlugin {
             .add_startup_system(spawn_terminal)
             .add_system(player_breath)
             .add_system(camera_follow)
+            .add_system(player_collision.after(player_movement))
             .register_inspectable::<Player>()
             .add_system(player_movement);
+    }
+}
+fn player_collision(
+    mut player_query: Query<(&mut Transform, &Player)>,
+    grid_query: Query<&WallGrid>,
+    wall_query: Query<&GlobalTransform, (With<Wall>, Without<Player>)>,
+) {
+    let grid = grid_query.single();
+    let (mut player_transform, player) = player_query.single_mut();
+    for wall_transform in wall_query.iter() {
+        match collide(
+            player_transform.translation,
+            player.hitbox,
+            wall_transform.translation,
+            Vec2::splat(grid.tile_size),
+        ) {
+            Some(Collision::Left) => {
+                player_transform.translation.x =
+                    wall_transform.translation.x - grid.tile_size / 2.0 - player.hitbox.x / 2.0
+            }
+            Some(Collision::Right) => {
+                player_transform.translation.x =
+                    wall_transform.translation.x + grid.tile_size / 2.0 + player.hitbox.x / 2.0
+            }
+            Some(Collision::Top) => {
+                player_transform.translation.y =
+                    wall_transform.translation.y + grid.tile_size / 2.0 + player.hitbox.y / 2.0
+            }
+            Some(Collision::Bottom) => {
+                player_transform.translation.y =
+                    wall_transform.translation.y - grid.tile_size / 2.0 - player.hitbox.y / 2.0
+            }
+            _ => {}
+        }
     }
 }
 

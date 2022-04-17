@@ -49,7 +49,7 @@ pub struct GasGrid {
 
 #[derive(Component)]
 pub struct WallGrid {
-    tile_size: f32,
+    pub tile_size: f32,
     pub walls: [[Option<Entity>; GRID_SIZE]; GRID_SIZE],
 }
 
