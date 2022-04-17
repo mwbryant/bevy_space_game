@@ -76,7 +76,7 @@ fn create_room(
     width: usize,
     height: usize,
 
-    tile_query: &mut Query<&mut GasTile>,
+    tile_query: &mut Query<&mut GasMixture>,
     grid_query: &Query<&GasGrid>,
 ) {
     let gas_grid = grid_query.single();
@@ -108,7 +108,7 @@ fn create_room(
 
 fn spawn_walls(
     mut commands: Commands,
-    mut tile_query: Query<&mut GasTile>,
+    mut tile_query: Query<&mut GasMixture>,
     grid_query: Query<&GasGrid>,
 ) {
     let mut grid = WallGrid {

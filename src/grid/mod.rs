@@ -10,6 +10,7 @@ pub const IDEAL_GAS_CONST: f64 = 8.314462618153 /* m^3*Pa/K*mol */ * (1.0/101325
 pub const TILE_VOLUME: f64 = 2.0; // m^3
 
 pub const GAS_COUNT: usize = 7;
+//Possible gas types, GasTiles contain all of these
 #[derive(Inspectable, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Gas {
     None = 0,
@@ -27,19 +28,35 @@ impl Default for Gas {
     }
 }
 
-#[derive(Component, Clone, Copy, Default)]
-pub struct GasTile {
+/// Component: Tile containing moles of gas and the temperature
+#[derive(Component, Clone, Copy, Default, Inspectable, Deserialize)]
+pub struct GasMixture {
     pub amount: [f64; GAS_COUNT],
     pub temperature: f64,
 }
 
-impl GasTile {
+impl GasMixture {
+    pub fn single_gas(gas: Gas, amount: f32, temperature: f32) -> GasMixture {
+        let mut mixture = GasMixture::default();
+        mixture.amount[gas as usize] = amount as f64;
+        mixture.temperature = temperature as f64;
+        mixture
+    }
+
     #[allow(dead_code)]
     pub fn get_pressure(&self, gas: Gas) -> f64 {
         self.amount[gas as usize] * self.temperature * IDEAL_GAS_CONST / TILE_VOLUME
     }
+    pub fn get_total_pressure(&self) -> f32 {
+        let mut total = 0.0;
+        for i in 0..GAS_COUNT {
+            total += self.amount[i] * self.temperature * IDEAL_GAS_CONST / TILE_VOLUME
+        }
+        total as f32
+    }
 }
 
+/// Component: Grid holding GasTile entities, walls must be registered here to affect gases
 #[derive(Component)]
 pub struct GasGrid {
     pub grid: [[Entity; GRID_SIZE]; GRID_SIZE],
@@ -47,20 +64,24 @@ pub struct GasGrid {
     pub tile_size: f32,
 }
 
+/// Component: Grid holding Wall entities
 #[derive(Component)]
 pub struct WallGrid {
     pub tile_size: f32,
     pub walls: [[Option<Entity>; GRID_SIZE]; GRID_SIZE],
 }
 
+/// Tag
 #[derive(Component)]
 pub struct Wall;
 
 #[derive(Component, Default, Inspectable, Deserialize)]
 //TODO mols, temp, pressure
+///
 pub struct Canister {
-    percent_full: f32,
-    gas: Gas,
+    gases: GasMixture,
+    pub volume: f32,
+    pub max_pressure: f32,
 }
 
 #[derive(Component, Deserialize, Default, Inspectable)]

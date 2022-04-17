@@ -28,7 +28,11 @@ fn update_canister_graphics(
     for (children, canister) in canister_query.iter() {
         for child in children.iter() {
             if let Ok((mut sprite, label)) = label_query.get_mut(*child) {
-                update_small_label(canister.percent_full, label.states, &mut sprite)
+                update_small_label(
+                    canister.gases.get_total_pressure() / canister.max_pressure,
+                    label.states,
+                    &mut sprite,
+                )
             }
         }
     }
@@ -36,7 +40,8 @@ fn update_canister_graphics(
         for child in children.iter() {
             if let Ok((mut sprite, label)) = label_query.get_mut(*child) {
                 update_small_label(
-                    machine.canisters[label.id].percent_full,
+                    machine.canisters[label.id].gases.get_total_pressure()
+                        / machine.canisters[label.id].max_pressure,
                     label.states,
                     &mut sprite,
                 );
@@ -62,10 +67,7 @@ fn spawn_canister_machine(mut commands: Commands) {
     }
     commands
         .entity(ent)
-        .insert(comp_from_config!(
-            CanisterMachine,
-            "config/canister_machine.ron"
-        ))
+        .insert(CanisterMachine::default())
         .insert(Name::new("Machine"))
         .insert(Clickable::default())
         .insert(Transform::from_xyz(40.0, 10.0, 300.0));
@@ -87,8 +89,9 @@ fn spawn_canister(mut commands: Commands) {
     commands
         .entity(ent)
         .insert(Canister {
-            percent_full: 0.50,
-            gas: Gas::Hydrogen,
+            gases: GasMixture::single_gas(Gas::Oxygen, 500.0, 293.0),
+            volume: 0.5,
+            max_pressure: 10.0,
         })
         .insert(Clickable::default())
         .insert(Transform::from_xyz(10.0, 10.0, 300.0))

@@ -1,3 +1,5 @@
+use bevy_inspector_egui::RegisterInspectable;
+
 use crate::prelude::*;
 
 use super::{GasPlugin, WallGrid, GRID_SIZE};
@@ -10,11 +12,12 @@ impl Plugin for GasPlugin {
             .add_system(gas_wall_connection)
             .add_system(heat_gas)
             .add_system(print_total)
-            .add_system(gas_clamp);
+            .add_system(gas_clamp)
+            .register_inspectable::<GasMixture>();
     }
 }
 
-fn gas_clamp(mut gas_query: Query<&mut GasTile, Changed<GasTile>>) {
+fn gas_clamp(mut gas_query: Query<&mut GasMixture, Changed<GasMixture>>) {
     for mut tile in gas_query.iter_mut() {
         for amount in tile.amount.iter_mut() {
             *amount = amount.clamp(0.0, 200.0);
@@ -23,7 +26,7 @@ fn gas_clamp(mut gas_query: Query<&mut GasTile, Changed<GasTile>>) {
 }
 
 #[allow(dead_code)]
-fn print_total(tile_query: Query<&GasTile>, grid_query: Query<&GasGrid>) {
+fn print_total(tile_query: Query<&GasMixture>, grid_query: Query<&GasGrid>) {
     let grid = grid_query.iter().next().unwrap();
     let mut total = 0.0;
     for tile in grid.grid.iter().flatten() {
@@ -33,7 +36,7 @@ fn print_total(tile_query: Query<&GasTile>, grid_query: Query<&GasGrid>) {
     println!("Total {:.1}", total);
 }
 
-fn heat_gas(mut tile_query: Query<&mut GasTile>, grid_query: Query<&GasGrid>, time: Res<Time>) {
+fn heat_gas(mut tile_query: Query<&mut GasMixture>, grid_query: Query<&GasGrid>, time: Res<Time>) {
     if time.time_since_startup().as_secs() < 5 {
         let grid = grid_query.iter().next();
         let mut tile = tile_query.get_mut(grid.unwrap().grid[25][25]).unwrap();
@@ -58,8 +61,8 @@ fn gas_wall_connection(mut gas_query: Query<&mut GasGrid>, wall_query: Query<&Wa
 fn diffuse_temperature(
     i: usize,
     j: usize,
-    x0: &[[GasTile; GRID_SIZE]; GRID_SIZE],
-    x: &mut [[GasTile; GRID_SIZE]; GRID_SIZE],
+    x0: &[[GasMixture; GRID_SIZE]; GRID_SIZE],
+    x: &mut [[GasMixture; GRID_SIZE]; GRID_SIZE],
     wall_mask: &[[bool; GRID_SIZE]; GRID_SIZE],
     a: f64,
 ) {
@@ -90,8 +93,8 @@ fn diffuse_temperature(
 fn diffuse_moles(
     i: usize,
     j: usize,
-    x0: &[[GasTile; GRID_SIZE]; GRID_SIZE],
-    x: &mut [[GasTile; GRID_SIZE]; GRID_SIZE],
+    x0: &[[GasMixture; GRID_SIZE]; GRID_SIZE],
+    x: &mut [[GasMixture; GRID_SIZE]; GRID_SIZE],
     wall_mask: &[[bool; GRID_SIZE]; GRID_SIZE],
     a: f64,
     gas: usize,
@@ -122,14 +125,14 @@ fn diffuse_moles(
 //TODO optimize, grids probably dont need be all the same massive size, maybe map is many smaller grids with interfaces
 //Thanks Jos Stam! http://graphics.cs.cmu.edu/nsp/course/15-464/Fall09/papers/StamFluidforGames.pdf
 fn diffuse_gas_grid(
-    mut tile_query: Query<(&mut GasTile, &mut TextureAtlasSprite)>,
+    mut tile_query: Query<(&mut GasMixture, &mut TextureAtlasSprite)>,
     grid_query: Query<&GasGrid>,
     time: Res<Time>,
 ) {
     for grid in grid_query.iter() {
         //Copy tiles XXX FIXME bad
-        let mut x0 = [[GasTile::default(); GRID_SIZE]; GRID_SIZE];
-        let mut x = [[GasTile::default(); GRID_SIZE]; GRID_SIZE];
+        let mut x0 = [[GasMixture::default(); GRID_SIZE]; GRID_SIZE];
+        let mut x = [[GasMixture::default(); GRID_SIZE]; GRID_SIZE];
         #[allow(clippy::needless_range_loop)]
         for i in 0..GRID_SIZE {
             for j in 0..GRID_SIZE {
@@ -200,7 +203,7 @@ fn spawn_gas_grid(mut commands: Commands, ascii: Res<AsciiSheet>) {
                 ),
                 Vec3::splat(1.0),
             );
-            let gas = GasTile {
+            let gas = GasMixture {
                 //https://www.discovermagazine.com/the-sciences/how-cold-is-it-in-outer-space
                 temperature: 2.7,
                 ..Default::default()

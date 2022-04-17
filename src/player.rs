@@ -65,7 +65,7 @@ fn player_collision(
 fn player_breath(
     player_query: Query<(&GlobalTransform, &Player)>,
     gas_query: Query<(&GasGrid, &GlobalTransform), Without<Player>>,
-    mut tile_query: Query<&mut GasTile>,
+    mut tile_query: Query<&mut GasMixture>,
     time: Res<Time>,
 ) {
     let (transform, player) = player_query.single();
