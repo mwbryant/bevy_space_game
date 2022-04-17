@@ -1,11 +1,11 @@
-use bevy::{prelude::*, render::camera::RenderTarget};
+use bevy::{
+    prelude::*,
+    render::camera::{Camera2d, RenderTarget},
+};
 
 pub struct MousePlugin;
 
 pub struct MousePosition(pub Vec2);
-
-#[derive(Component)]
-pub struct MainCamera;
 
 impl Plugin for MousePlugin {
     fn build(&self, app: &mut App) {
@@ -20,7 +20,7 @@ fn mouse_position(
     wnds: Res<Windows>,
     mut mouse_position: ResMut<MousePosition>,
     // query to get camera transform
-    q_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
+    q_camera: Query<(&Camera, &GlobalTransform), With<Camera2d>>,
 ) {
     // get the camera info and transform
     // assuming there is exactly one main camera entity, so query::single() is OK

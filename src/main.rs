@@ -23,14 +23,13 @@ mod prelude;
 use debug::DebugPlugin;
 use graphics::GraphicsPluginGroup;
 use grid::GridPluginGroup;
-use mouse::{MainCamera, MousePlugin};
+use mouse::MousePlugin;
 use player::{Player, PlayerPlugin};
 use ron::from_str;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Component)]
 enum AppState {
-    Splash,
     Game,
 }
 
@@ -88,7 +87,7 @@ fn spawn_camera(mut commands: Commands) {
 
     camera.orthographic_projection.scaling_mode = ScalingMode::None;
 
-    commands.spawn_bundle(camera).insert(MainCamera);
+    commands.spawn_bundle(camera);
 }
 
 #[derive(Serialize, Deserialize)]

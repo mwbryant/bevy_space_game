@@ -22,14 +22,15 @@ fn gas_clamp(mut gas_query: Query<&mut GasTile, Changed<GasTile>>) {
     }
 }
 
-fn print_total(mut tile_query: Query<&mut GasTile>, grid_query: Query<&GasGrid>) {
+#[allow(dead_code)]
+fn print_total(tile_query: Query<&GasTile>, grid_query: Query<&GasGrid>) {
     let grid = grid_query.iter().next().unwrap();
     let mut total = 0.0;
     for tile in grid.grid.iter().flatten() {
-        let mut tile = tile_query.get_mut(*tile).unwrap();
+        let tile = tile_query.get(*tile).unwrap();
         total += tile.amount[1];
     }
-    println!("Total {}", total);
+    println!("Total {:.1}", total);
 }
 
 fn heat_gas(mut tile_query: Query<&mut GasTile>, grid_query: Query<&GasGrid>, time: Res<Time>) {
@@ -85,6 +86,7 @@ fn diffuse_temperature(
     x[i][j].temperature = new_x;
 }
 
+//TODO should diffuse pressure but thats a bit complex, just multipling rate by temperature breaks the invariant that a tile loses as much as another gains
 fn diffuse_moles(
     i: usize,
     j: usize,
@@ -102,18 +104,18 @@ fn diffuse_moles(
         !up_wall as isize + !down_wall as isize + !left_wall as isize + !right_wall as isize;
     let mut new_x = x0[i][j].amount[gas];
     if !left_wall {
-        new_x += a * x[i - 1][j].amount[gas];
+        new_x += a * x[i - 1][j].amount[gas] * x[i - 1][j].temperature;
     }
     if !right_wall {
-        new_x += a * x[i + 1][j].amount[gas];
+        new_x += a * x[i + 1][j].amount[gas] * x[i + 1][j].temperature;
     }
     if !up_wall {
-        new_x += a * x[i][j - 1].amount[gas];
+        new_x += a * x[i][j - 1].amount[gas] * x[i][j - 1].temperature;
     }
     if !down_wall {
-        new_x += a * x[i][j + 1].amount[gas];
+        new_x += a * x[i][j + 1].amount[gas] * x[i][j + 1].temperature;
     }
-    new_x /= 1.0 + wall_count as f64 * a;
+    new_x /= 1.0 + wall_count as f64 * (a * x[i][j].temperature);
     *x[i][j].amount.get_mut(gas).unwrap() = new_x;
 }
 
@@ -136,7 +138,7 @@ fn diffuse_gas_grid(
             }
         }
 
-        let a = time.delta_seconds() as f64 * 0.0003 * (GRID_SIZE * GRID_SIZE) as f64;
+        let a = time.delta_seconds() as f64 * 0.0006 * (GRID_SIZE * GRID_SIZE) as f64;
         for _k in 0..30 {
             for i in 0..(GRID_SIZE) {
                 for j in 0..(GRID_SIZE) {
@@ -145,15 +147,12 @@ fn diffuse_gas_grid(
             }
         }
 
-        let a = time.delta_seconds() as f64 * 0.00001 * (GRID_SIZE * GRID_SIZE) as f64;
-        for _k in 0..30 {
+        let a = time.delta_seconds() as f64 * 0.005;
+        for _k in 0..50 {
             for i in 0..(GRID_SIZE) {
                 for j in 0..(GRID_SIZE) {
                     for gas in 0..GAS_COUNT {
-                        //diffuse faster at higher temps
-                        //not exactly physically accurate but sqrts would suck here and its a game..
-                        let rate = a * x[i][j].temperature;
-                        diffuse_moles(i, j, &x0, &mut x, &grid.wall_mask, rate, gas);
+                        diffuse_moles(i, j, &x0, &mut x, &grid.wall_mask, a, gas);
                     }
                 }
             }
@@ -167,9 +166,9 @@ fn diffuse_gas_grid(
                 gas.temperature = x[i][j].temperature;
                 if !grid.wall_mask[i][j] {
                     sprite.color = Color::rgba(
-                        (gas.amount[Gas::Oxygen as usize] as f32 / 83.0).clamp(0.0, 1.0),
-                        (gas.amount[Gas::Nitrogen as usize] as f32 / 83.0).clamp(0.0, 1.0),
-                        (gas.amount[Gas::CarbonDioxide as usize] as f32 / 83.0).clamp(0.0, 1.0),
+                        (gas.get_pressure(Gas::Oxygen) as f32 / 2.0).clamp(0.0, 1.0),
+                        (gas.get_pressure(Gas::Nitrogen) as f32 / 2.0).clamp(0.0, 1.0),
+                        (gas.get_pressure(Gas::CarbonDioxide) as f32 / 2.0).clamp(0.0, 1.0),
                         0.25,
                     );
                 } else {

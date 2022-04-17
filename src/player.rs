@@ -1,8 +1,8 @@
-use bevy::prelude::*;
+use bevy::render::camera::Camera2d;
 use bevy_inspector_egui::{Inspectable, RegisterInspectable};
 use serde::Deserialize;
 
-use crate::{mouse::MainCamera, prelude::*};
+use crate::prelude::*;
 
 #[derive(Component, Inspectable, Deserialize, Clone, Copy)]
 pub struct Player {
@@ -130,7 +130,7 @@ fn player_movement(
 
 fn camera_follow(
     player_query: Query<&GlobalTransform, With<Player>>,
-    mut camera_query: Query<&mut Transform, (Without<Player>, With<MainCamera>)>,
+    mut camera_query: Query<&mut Transform, (Without<Player>, With<Camera2d>)>,
 ) {
     let player = player_query.single();
     let mut camera = camera_query.single_mut();

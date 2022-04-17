@@ -118,10 +118,20 @@ fn spawn_walls(
     create_room(
         &mut commands,
         &mut grid,
-        20,
-        20,
-        10,
-        10,
+        22,
+        22,
+        6,
+        6,
+        &mut tile_query,
+        &grid_query,
+    );
+    create_room(
+        &mut commands,
+        &mut grid,
+        17,
+        22,
+        6,
+        6,
         &mut tile_query,
         &grid_query,
     );

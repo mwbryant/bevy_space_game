@@ -4,7 +4,7 @@ use bevy::{asset::LoadState, prelude::*, utils::HashMap};
 use super::Graphics;
 use super::{Graphic, PixelPerfectPlugin};
 use crate::mouse::MousePosition;
-use crate::{prelude::*, AppState};
+use crate::prelude::*;
 
 #[derive(Default)]
 struct HitboxCache {
@@ -59,7 +59,6 @@ fn test_hitbox(
 }
 
 fn create_hitbox_cache(
-    mut commands: Commands,
     graphics: Res<Graphics>,
     server: Res<AssetServer>,
     atlas_assets: Res<Assets<TextureAtlas>>,

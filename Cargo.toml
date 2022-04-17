@@ -27,6 +27,5 @@ bevy_kira_audio = { version = "0.9", features = ["ogg", "wav"] }
 bevy-inspector-egui = "0.10"
 serde = "1.0.136"
 ron = "0.7.0"
-# bevy_loading = { git = "https://github.com/IyesGames/bevy_loading"}
 
 #cargo run --release --features bevy/trace,bevy/trace_chrome
