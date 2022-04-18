@@ -20,6 +20,7 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(spawn_player)
             .add_startup_system(spawn_terminal)
+            .add_startup_system(setup_gas_ui)
             .add_system(player_breath)
             .add_system(camera_follow)
             .add_system(player_collision.after(player_movement))
@@ -61,11 +62,45 @@ fn player_collision(
         }
     }
 }
+fn setup_gas_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // UI camera
+    commands.spawn_bundle(UiCameraBundle::default());
+    // Text with one section
+    commands.spawn_bundle(TextBundle {
+        style: Style {
+            align_self: AlignSelf::FlexEnd,
+            position_type: PositionType::Absolute,
+            position: Rect {
+                bottom: Val::Px(5.0),
+                left: Val::Px(15.0),
+                ..default()
+            },
+            ..default()
+        },
+        // Use the `Text::with_section` constructor
+        text: Text::with_section(
+            // Accepts a `String` or any type that converts into a `String`, such as `&str`
+            "hello bevy!",
+            TextStyle {
+                font: asset_server.load("QuattrocentoSans-Bold.ttf"),
+                font_size: 36.0,
+                color: Color::WHITE,
+            },
+            // Note: You can use `Default::default()` in place of the `TextAlignment`
+            TextAlignment {
+                horizontal: HorizontalAlign::Center,
+                ..default()
+            },
+        ),
+        ..default()
+    });
+}
 
 fn player_breath(
     player_query: Query<(&GlobalTransform, &Player)>,
     gas_query: Query<(&GasGrid, &GlobalTransform), Without<Player>>,
     mut tile_query: Query<&mut GasMixture>,
+    mut text_query: Query<&mut Text>,
     time: Res<Time>,
 ) {
     let (transform, player) = player_query.single();
@@ -82,11 +117,13 @@ fn player_breath(
 
     let mut tile = tile_query.get_mut(tile).unwrap();
     let to_breath = (player.breath_rate * time.delta_seconds()) as f64;
-    println!(
-        "Player gas {:.2}, {:.2}, {:.2}",
+    text_query.single_mut().sections[0].value = format!(
+        "At Player: {:.0}° \nO2: {:.0} moles, {:.2} atms\nCO2: {:.0} moles, {:.2} atms",
         tile.temperature,
         tile.amount[1],
-        tile.get_pressure(Gas::Oxygen)
+        tile.get_pressure(Gas::Oxygen),
+        tile.amount[Gas::CarbonDioxide as usize],
+        tile.get_pressure(Gas::CarbonDioxide),
     );
     if to_breath < tile.amount[Gas::Oxygen as usize] {
         tile.amount[Gas::Oxygen as usize] -= to_breath;

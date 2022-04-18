@@ -70,7 +70,7 @@ fn spawn_canister_machine(mut commands: Commands) {
         .insert(CanisterMachine::default())
         .insert(Name::new("Machine"))
         .insert(Clickable::default())
-        .insert(Transform::from_xyz(40.0, 10.0, 300.0));
+        .insert(Transform::from_xyz(32.0, 10.0, 300.0));
 }
 
 fn spawn_canister(mut commands: Commands) {
@@ -94,7 +94,7 @@ fn spawn_canister(mut commands: Commands) {
             max_pressure: 10.0,
         })
         .insert(Clickable::default())
-        .insert(Transform::from_xyz(10.0, 10.0, 300.0))
+        .insert(Transform::from_xyz(06.0, 10.0, 300.0))
         .insert(Name::new("Canister"))
         .add_child(label);
 }

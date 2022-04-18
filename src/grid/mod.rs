@@ -89,6 +89,13 @@ pub struct CanisterMachine {
     canisters: [Canister; 4],
 }
 
+#[derive(Component, Inspectable)]
+pub enum GasVisualizationSettings {
+    Moles,
+    Pressure,
+    Temperature,
+}
+
 struct WallPlugin;
 struct GasPlugin;
 struct CanisterPlugin;

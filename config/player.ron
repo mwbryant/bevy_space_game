@@ -1,5 +1,5 @@
 (
     move_speed: 64.0,
-    breath_rate: 0.0,
+    breath_rate: 30.0,
     hitbox: (16.0, 26.0)
 )

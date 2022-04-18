@@ -10,9 +10,10 @@ impl Plugin for GasPlugin {
         app.add_startup_system(spawn_gas_grid)
             .add_system(diffuse_gas_grid)
             .add_system(gas_wall_connection)
-            .add_system(heat_gas)
+            //.add_system(heat_gas)
             .add_system(print_total)
             .add_system(gas_clamp)
+            .register_inspectable::<GasVisualizationSettings>()
             .register_inspectable::<GasMixture>();
     }
 }
@@ -39,8 +40,8 @@ fn print_total(tile_query: Query<&GasMixture>, grid_query: Query<&GasGrid>) {
 fn heat_gas(mut tile_query: Query<&mut GasMixture>, grid_query: Query<&GasGrid>, time: Res<Time>) {
     if time.time_since_startup().as_secs() < 5 {
         let grid = grid_query.iter().next();
-        let mut tile = tile_query.get_mut(grid.unwrap().grid[25][25]).unwrap();
-        tile.temperature += 10.0;
+        let mut tile = tile_query.get_mut(grid.unwrap().grid[23][23]).unwrap();
+        tile.temperature += 500.0 * time.delta_seconds() as f64;
     }
 }
 
@@ -126,10 +127,10 @@ fn diffuse_moles(
 //Thanks Jos Stam! http://graphics.cs.cmu.edu/nsp/course/15-464/Fall09/papers/StamFluidforGames.pdf
 fn diffuse_gas_grid(
     mut tile_query: Query<(&mut GasMixture, &mut TextureAtlasSprite)>,
-    grid_query: Query<&GasGrid>,
+    grid_query: Query<(&GasGrid, &GasVisualizationSettings)>,
     time: Res<Time>,
 ) {
-    for grid in grid_query.iter() {
+    for (grid, visualization) in grid_query.iter() {
         //Copy tiles XXX FIXME bad
         let mut x0 = [[GasMixture::default(); GRID_SIZE]; GRID_SIZE];
         let mut x = [[GasMixture::default(); GRID_SIZE]; GRID_SIZE];
@@ -168,14 +169,36 @@ fn diffuse_gas_grid(
                 gas.amount = x[i][j].amount;
                 gas.temperature = x[i][j].temperature;
                 if !grid.wall_mask[i][j] {
-                    sprite.color = Color::rgba(
-                        (gas.get_pressure(Gas::Oxygen) as f32 / 2.0).clamp(0.0, 1.0),
-                        (gas.get_pressure(Gas::Nitrogen) as f32 / 2.0).clamp(0.0, 1.0),
-                        (gas.get_pressure(Gas::CarbonDioxide) as f32 / 2.0).clamp(0.0, 1.0),
-                        0.25,
-                    );
+                    match *visualization {
+                        GasVisualizationSettings::Pressure => {
+                            sprite.color = Color::rgba(
+                                (gas.get_pressure(Gas::Oxygen) as f32 / 1.5).clamp(0.0, 1.0),
+                                (gas.get_pressure(Gas::Nitrogen) as f32 / 1.5).clamp(0.0, 1.0),
+                                (gas.get_pressure(Gas::CarbonDioxide) as f32 / 1.0).clamp(0.0, 1.0),
+                                0.25,
+                            );
+                        }
+                        GasVisualizationSettings::Moles => {
+                            sprite.color = Color::rgba(
+                                ((gas.amount[Gas::Oxygen as usize] - 75.0) as f32 / 15.0)
+                                    .clamp(0.0, 1.0),
+                                (gas.amount[Gas::Nitrogen as usize] as f32 / 100.0).clamp(0.0, 1.0),
+                                (gas.amount[Gas::CarbonDioxide as usize] as f32 / 100.0)
+                                    .clamp(0.0, 1.0),
+                                0.25,
+                            );
+                        }
+                        GasVisualizationSettings::Temperature => {
+                            sprite.color = Color::rgba(
+                                ((gas.temperature - 250.0) as f32 / 250.0).clamp(0.0, 1.0),
+                                0.0,
+                                0.0,
+                                0.25,
+                            );
+                        }
+                    }
                 } else {
-                    sprite.color = Color::rgba(0.1, 0.1, 0.1, 0.8);
+                    sprite.color = Color::rgba(0.1, 0.1, 0.1, 0.0);
                 }
             }
         }
@@ -223,5 +246,6 @@ fn spawn_gas_grid(mut commands: Commands, ascii: Res<AsciiSheet>) {
         ))
         .insert(gas_grid)
         .insert(GlobalTransform::default())
+        .insert(GasVisualizationSettings::Pressure)
         .insert(Name::new("Gas Grid"));
 }
