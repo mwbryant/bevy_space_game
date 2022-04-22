@@ -34,7 +34,7 @@ fn print_total(tile_query: Query<&GasMixture>, grid_query: Query<&GasGrid>) {
         let tile = tile_query.get(*tile).unwrap();
         total += tile.amount[1];
     }
-    println!("Total {:.1}", total);
+    //println!("Total {:.1}", total);
 }
 
 fn heat_gas(mut tile_query: Query<&mut GasMixture>, grid_query: Query<&GasGrid>, time: Res<Time>) {

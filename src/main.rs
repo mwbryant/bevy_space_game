@@ -1,4 +1,5 @@
 #![allow(clippy::redundant_field_names)]
+#![allow(clippy::type_complexity)]
 #![allow(clippy::too_many_arguments)]
 use std::fs;
 

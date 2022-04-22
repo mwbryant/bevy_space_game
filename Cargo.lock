@@ -724,6 +724,7 @@ dependencies = [
  "bevy",
  "bevy-inspector-egui",
  "bevy_kira_audio",
+ "rand",
  "ron",
  "serde",
 ]

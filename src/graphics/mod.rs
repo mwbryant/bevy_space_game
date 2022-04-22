@@ -6,9 +6,11 @@ use self::assets::SpriteSheet;
 
 mod ascii;
 mod assets;
+mod particles;
 mod pixel_perfect_selection;
 
 pub use ascii::spawn_ascii_sprite;
+pub use particles::*;
 
 #[derive(Inspectable, Deserialize, Serialize, Hash, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Orientation {
@@ -96,8 +98,22 @@ pub struct PixelPerfectHitBox {
 struct AsciiPlugin {
     pub tile_size: f32,
 }
+
+#[derive(Component)]
+pub struct ParticleSpawner {
+    rate: Timer,
+    amount_per_burst: usize,
+    particle_lifetime: f32,
+    particle_position_range: f32,
+    //TODO support distributions for variance
+    particle_size: Option<ParticleSize>,
+    particle_velocity: Option<ParticleVelocity>,
+    particle_color: Option<ParticleColor>,
+}
+
 struct GameAssetsPlugin;
 struct PixelPerfectPlugin;
+struct ParticlePlugin;
 
 pub struct GraphicsPluginGroup;
 
@@ -106,6 +122,7 @@ impl PluginGroup for GraphicsPluginGroup {
         group
             .add(AsciiPlugin { tile_size: 32.0 })
             .add(GameAssetsPlugin)
+            .add(ParticlePlugin)
             .add(PixelPerfectPlugin);
     }
 }
