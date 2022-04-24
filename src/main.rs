@@ -51,14 +51,7 @@ fn main() {
         .add_plugin(DebugPlugin)
         .add_plugins(GridPluginGroup)
         .add_plugins(GraphicsPluginGroup)
-        .add_plugin(LogDiagnosticsPlugin::default())
-        .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_state(AppState::Game)
-        // Add loading plugin for the splash screen
-        //.add_plugin(LoadingPlugin {
-        //loading_state: AppState::Splash,
-        //next_state: AppState::Game,
-        //})
         .add_plugin(MousePlugin)
         .add_startup_system(spawn_camera)
         .add_plugin(PlayerPlugin)

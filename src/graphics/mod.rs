@@ -8,6 +8,7 @@ mod ascii;
 mod assets;
 mod particles;
 mod pixel_perfect_selection;
+mod ui;
 
 pub use ascii::spawn_ascii_sprite;
 pub use particles::*;
@@ -111,9 +112,13 @@ pub struct ParticleSpawner {
     particle_color: Option<ParticleColor>,
 }
 
+#[derive(Component)]
+pub struct GasText;
+
 struct GameAssetsPlugin;
 struct PixelPerfectPlugin;
 struct ParticlePlugin;
+struct UiPlugin;
 
 pub struct GraphicsPluginGroup;
 
@@ -123,6 +128,7 @@ impl PluginGroup for GraphicsPluginGroup {
             .add(AsciiPlugin { tile_size: 32.0 })
             .add(GameAssetsPlugin)
             .add(ParticlePlugin)
+            .add(UiPlugin)
             .add(PixelPerfectPlugin);
     }
 }
