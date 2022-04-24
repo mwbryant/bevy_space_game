@@ -29,7 +29,9 @@ fn test_hitbox(
     if buttons.just_released(MouseButton::Left) {
         let mut over_anything = false;
         for (transform, graphic, name, mut click) in query.iter_mut() {
+            println!("Checking {}!", name.as_str());
             if let Some(hit_box) = hitboxes.map.get(graphic) {
+                println!("Found hitbox {}!", name.as_str());
                 //x and y are centered
                 let x_offset = transform.translation.x - hit_box.width as f32 / 2.0;
                 let y_offset = transform.translation.y - hit_box.height as f32 / 2.0;
@@ -64,23 +66,16 @@ fn create_hitbox_cache(
     atlas_assets: Res<Assets<TextureAtlas>>,
     image_assets: Res<Assets<Image>>,
     mut cache: ResMut<HitboxCache>,
-    // https://bevy-cheatbook.github.io/assets/assetevent.html
-    mut ev_asset: EventReader<AssetEvent<Image>>,
 ) {
-    for ev in ev_asset.iter() {
-        if let AssetEvent::Modified { handle: texture } = ev {
-            for (graphic, (desc, _)) in graphics.graphics_map.iter() {
-                let atlas_handle = graphics.handle_map[&desc.sheet].clone();
-                let desc_texture = atlas_assets.get(atlas_handle).unwrap().texture.clone();
+    //XXX wasted work here every frame
+    for (graphic, (desc, _)) in graphics.graphics_map.iter() {
+        if !cache.map.contains_key(graphic) {
+            let atlas_handle = graphics.handle_map[&desc.sheet].clone();
+            let desc_texture = atlas_assets.get(atlas_handle).unwrap().texture.clone();
 
-                if desc_texture == *texture {
-                    if server.get_load_state(texture.clone()) == LoadState::Loaded {
-                        let image = image_assets.get(texture).unwrap();
-                        add_graphic_to_hitboxes(&mut cache, graphic, desc.min, desc.max, image);
-                    } else {
-                        println!("Not Loaded");
-                    }
-                }
+            if server.get_load_state(desc_texture.clone()) == LoadState::Loaded {
+                let image = image_assets.get(desc_texture).unwrap();
+                add_graphic_to_hitboxes(&mut cache, graphic, desc.min, desc.max, image);
             }
         }
     }
