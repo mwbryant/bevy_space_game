@@ -91,6 +91,7 @@ pub struct CanisterMachine {
 
 #[derive(Component, Inspectable)]
 pub enum GasVisualizationSettings {
+    None,
     Moles,
     Pressure,
     Temperature,

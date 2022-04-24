@@ -116,6 +116,21 @@ fn spawn_terminal(mut commands: Commands) {
 
     let ent = commands
         .spawn()
+        .insert(Graphic::WorldObject(WorldObject::Furance(true)))
+        .id();
+    commands
+        .entity(ent)
+        .insert(Name::new("Furance"))
+        .insert(Clickable::default())
+        .insert(Transform::from_xyz(-220.0, 32.0, 100.0));
+    spawn_particle_spawner(
+        &mut commands,
+        "config/fire_particle_spawner.ron",
+        Vec2::new(-230.0, 41.5),
+    );
+
+    let ent = commands
+        .spawn()
         .insert(Graphic::WorldObject(WorldObject::Terminal(
             Orientation::Right,
         )))

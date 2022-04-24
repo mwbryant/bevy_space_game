@@ -3,12 +3,7 @@
 #![allow(clippy::too_many_arguments)]
 use std::fs;
 
-use bevy::{
-    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    prelude::*,
-    render::camera::ScalingMode,
-    window::PresentMode,
-};
+use bevy::{prelude::*, render::camera::ScalingMode, window::PresentMode};
 //use bevy_loading::prelude::*;
 
 pub const CLEAR: Color = Color::rgb(0.3, 0.3, 0.3);

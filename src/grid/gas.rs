@@ -11,7 +11,7 @@ impl Plugin for GasPlugin {
             .add_system(diffuse_gas_grid)
             .add_system(gas_wall_connection)
             //.add_system(heat_gas)
-            .add_system(print_total)
+            //.add_system(print_total)
             .add_system(gas_clamp)
             .register_inspectable::<GasVisualizationSettings>()
             .register_inspectable::<GasMixture>();
@@ -34,9 +34,10 @@ fn print_total(tile_query: Query<&GasMixture>, grid_query: Query<&GasGrid>) {
         let tile = tile_query.get(*tile).unwrap();
         total += tile.amount[1];
     }
-    //println!("Total {:.1}", total);
+    println!("Total {:.1}", total);
 }
 
+#[allow(dead_code)]
 fn heat_gas(mut tile_query: Query<&mut GasMixture>, grid_query: Query<&GasGrid>, time: Res<Time>) {
     if time.time_since_startup().as_secs() < 5 {
         let grid = grid_query.iter().next();
@@ -170,6 +171,9 @@ fn diffuse_gas_grid(
                 gas.temperature = x[i][j].temperature;
                 if !grid.wall_mask[i][j] {
                     match *visualization {
+                        GasVisualizationSettings::None => {
+                            sprite.color = Color::NONE;
+                        }
                         GasVisualizationSettings::Pressure => {
                             sprite.color = Color::rgba(
                                 (gas.get_pressure(Gas::Oxygen) as f32 / 1.5).clamp(0.0, 1.0),
@@ -246,6 +250,6 @@ fn spawn_gas_grid(mut commands: Commands, ascii: Res<AsciiSheet>) {
         ))
         .insert(gas_grid)
         .insert(GlobalTransform::default())
-        .insert(GasVisualizationSettings::Pressure)
+        .insert(GasVisualizationSettings::None)
         .insert(Name::new("Gas Grid"));
 }

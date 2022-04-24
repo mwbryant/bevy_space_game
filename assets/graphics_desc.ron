@@ -126,5 +126,16 @@
             min: (224,64),
             max: (256,96),
         ),
+        WorldObject(Furance(false)) : SpriteDesc (
+            sheet: StarterGraphics,
+            min: (128,96),
+            max: (160,128),
+        ),
+        WorldObject(Furance(true)) : SpriteDesc (
+            sheet: StarterGraphics,
+            min: (128,64),
+            max: (160,96),
+        ),
+
     }
 )

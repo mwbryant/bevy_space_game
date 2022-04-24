@@ -112,7 +112,6 @@ impl GameAssetsPlugin {
         //Add all sprites to their atlases and save the index
         let mut graphics_map = HashMap::default();
         for (item, desc) in sprite_desc.graphics_map.iter() {
-            println!("Found graphic {:?}", item);
             let atlas = atlas_map.get_mut(&desc.sheet).unwrap();
             let index = atlas.add_texture(bevy::sprite::Rect {
                 min: desc.min,

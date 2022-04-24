@@ -1,0 +1,19 @@
+(
+    rate: 0.04, 
+    amount_per_burst: 2,
+    particle_lifetime: 0.3,
+    particle_position_range: 2.0,
+    //TODO support distributions for variance
+    particle_size: Some(ParticleSize (
+        start: 5.0,
+        end: 2.0,
+    )),
+    particle_velocity: Some(ParticleVelocity (
+        start: (0.0, 100.0),
+        end: (0.0, 10.0),
+    )),
+    particle_color: Some(ParticleColor (
+        start: Rgba(red: 1.0, green: 0.35, blue: 0.0, alpha: 1.0),
+        end: Rgba(red: 0.2, green: 0.2, blue: 0.2, alpha: 0.1),
+    )),
+)

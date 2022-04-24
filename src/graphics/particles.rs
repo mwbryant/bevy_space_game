@@ -3,23 +3,23 @@ use crate::prelude::*;
 use super::ParticlePlugin;
 
 #[derive(Component)]
-pub struct Particle {
+struct Particle {
     lifetime: Timer,
 }
 
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Clone, Copy, Deserialize)]
 pub struct ParticleVelocity {
     start: Vec2,
     end: Vec2,
 }
 
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Clone, Copy, Deserialize)]
 pub struct ParticleSize {
     start: f32,
     end: f32,
 }
 
-#[derive(Component, Clone, Copy)]
+#[derive(Component, Clone, Copy, Deserialize)]
 pub struct ParticleColor {
     start: Color,
     end: Color,
@@ -27,9 +27,7 @@ pub struct ParticleColor {
 
 impl Plugin for ParticlePlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(spawn_test_spawner)
-            .add_system(update_particles)
-            .add_system(update_spawners);
+        app.add_system(update_particles).add_system(update_spawners);
     }
 }
 
@@ -88,12 +86,12 @@ fn update_particles(
 
 fn update_spawners(
     mut commands: Commands,
-    mut spawners: Query<(Entity, &mut ParticleSpawner)>,
+    mut spawners: Query<(Entity, &ParticleSpawner, &mut ParticleSpawnerTimer)>,
     time: Res<Time>,
 ) {
-    for (ent, mut spawner) in spawners.iter_mut() {
-        spawner.rate.tick(time.delta());
-        if spawner.rate.just_finished() {
+    for (ent, spawner, mut timer) in spawners.iter_mut() {
+        timer.timer.tick(time.delta());
+        if timer.timer.just_finished() {
             for _ in 0..spawner.amount_per_burst {
                 let mut sprite = Sprite::default();
                 let particle = commands
@@ -130,29 +128,16 @@ fn update_spawners(
     }
 }
 
-fn spawn_test_spawner(mut commands: Commands) {
+pub fn spawn_particle_spawner(commands: &mut Commands, config: &str, position: Vec2) {
+    //let spawner = comp_from_config!(ParticleSpawner, "config/smoke_particle_spawner.ron");
+    let spawner = comp_from_config!(ParticleSpawner, config);
     commands
-        .spawn_bundle(TransformBundle::from_transform(Transform::from_xyz(
-            -220.0, 0.0, 0.0,
-        )))
-        .insert(ParticleSpawner {
-            rate: Timer::from_seconds(0.1, true),
-            amount_per_burst: 5,
-            particle_lifetime: 0.5,
-            particle_position_range: 20.0,
-            //TODO support distributions for variance
-            particle_size: Some(ParticleSize {
-                start: 10.0,
-                end: 3.0,
-            }),
-            particle_velocity: Some(ParticleVelocity {
-                start: Vec2::new(0.0, 100.0),
-                end: Vec2::splat(0.0),
-            }),
-            particle_color: Some(ParticleColor {
-                start: Color::ORANGE,
-                end: Color::GRAY,
-            }),
+        .spawn_bundle(TransformBundle::from_transform(
+            Transform::from_translation(position.extend(0.0)),
+        ))
+        .insert(ParticleSpawnerTimer {
+            timer: Timer::from_seconds(spawner.rate, true),
         })
+        .insert(spawner)
         .insert(Name::new("ParticleSpawner"));
 }

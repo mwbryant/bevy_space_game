@@ -29,9 +29,7 @@ fn test_hitbox(
     if buttons.just_released(MouseButton::Left) {
         let mut over_anything = false;
         for (transform, graphic, name, mut click) in query.iter_mut() {
-            println!("Checking {}!", name.as_str());
             if let Some(hit_box) = hitboxes.map.get(graphic) {
-                println!("Found hitbox {}!", name.as_str());
                 //x and y are centered
                 let x_offset = transform.translation.x - hit_box.width as f32 / 2.0;
                 let y_offset = transform.translation.y - hit_box.height as f32 / 2.0;

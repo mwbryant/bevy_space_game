@@ -44,6 +44,7 @@ pub enum WorldObject {
     SmallLabel(usize),
     Terminal(Orientation),
     Wall(WallConnection),
+    Furance(bool),
 }
 
 impl Default for WorldObject {
@@ -100,9 +101,9 @@ struct AsciiPlugin {
     pub tile_size: f32,
 }
 
-#[derive(Component)]
+#[derive(Component, Deserialize)]
 pub struct ParticleSpawner {
-    rate: Timer,
+    rate: f32,
     amount_per_burst: usize,
     particle_lifetime: f32,
     particle_position_range: f32,
@@ -110,6 +111,13 @@ pub struct ParticleSpawner {
     particle_size: Option<ParticleSize>,
     particle_velocity: Option<ParticleVelocity>,
     particle_color: Option<ParticleColor>,
+}
+
+//XXX Timer can not be deserialized
+//TODO bundle
+#[derive(Component)]
+pub struct ParticleSpawnerTimer {
+    timer: Timer,
 }
 
 #[derive(Component)]
