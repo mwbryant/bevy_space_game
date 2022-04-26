@@ -1,0 +1,23 @@
+(
+    rate: 0.1, 
+    precharge: true,
+    image: "star.png",
+    amount_per_burst: 30,
+    particle_lifetime: 15.0,
+    particle_position_range: 2000.0,
+    //TODO support distributions for variance
+    particle_size: Some(ParticleSize (
+        start: 2.0,
+        variance: 3.0,
+        end: 0.5,
+    )),
+    particle_velocity: Some(ParticleVelocity (
+        start: (0.0, 0.0),
+        end: (0.0, 0.0),
+    )),
+    particle_color: Some(ParticleColor (
+        start: Rgba(red: 0.2, green: 0.2, blue: 0.2, alpha: 0.1),
+        mid: Some(Rgba(red: 1.0, green: 1.0, blue: 1.0, alpha: 1.0)),
+        end: Rgba(red: 0.2, green: 0.2, blue: 0.2, alpha: 0.1),
+    )),
+)

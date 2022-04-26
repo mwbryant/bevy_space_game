@@ -101,7 +101,7 @@ fn player_breath(
     }
 }
 
-fn spawn_terminal(mut commands: Commands) {
+fn spawn_terminal(mut commands: Commands, assets: Res<AssetServer>) {
     let ent = commands
         .spawn()
         .insert(Graphic::WorldObject(WorldObject::Terminal(
@@ -126,7 +126,8 @@ fn spawn_terminal(mut commands: Commands) {
     spawn_particle_spawner(
         &mut commands,
         "config/fire_particle_spawner.ron",
-        Vec2::new(-230.0, 41.5),
+        Vec3::new(-230.0, 41.5, 900.0),
+        &assets,
     );
 
     let ent = commands

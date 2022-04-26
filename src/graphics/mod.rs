@@ -101,9 +101,11 @@ struct AsciiPlugin {
     pub tile_size: f32,
 }
 
-#[derive(Component, Deserialize)]
+#[derive(Component, Deserialize, Clone)]
 pub struct ParticleSpawner {
     rate: f32,
+    precharge: bool,
+    image: String,
     amount_per_burst: usize,
     particle_lifetime: f32,
     particle_position_range: f32,

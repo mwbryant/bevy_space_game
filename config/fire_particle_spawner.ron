@@ -1,11 +1,14 @@
 (
     rate: 0.04, 
+    image: "star.png",
+    precharge: false,
     amount_per_burst: 2,
     particle_lifetime: 0.3,
     particle_position_range: 2.0,
     //TODO support distributions for variance
     particle_size: Some(ParticleSize (
         start: 5.0,
+        variance: 1.0,
         end: 2.0,
     )),
     particle_velocity: Some(ParticleVelocity (
