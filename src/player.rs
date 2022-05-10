@@ -164,22 +164,28 @@ fn player_movement(
 
     let mut y_delta = 0.0;
     if keyboard.pressed(KeyCode::W) {
-        *graphic = Graphic::Player(Orientation::Up);
         y_delta += player.move_speed * time.delta_seconds();
     }
     if keyboard.pressed(KeyCode::S) {
-        *graphic = Graphic::Player(Orientation::Down);
         y_delta -= player.move_speed * time.delta_seconds();
     }
 
     let mut x_delta = 0.0;
     if keyboard.pressed(KeyCode::A) {
-        *graphic = Graphic::Player(Orientation::Left);
         x_delta -= player.move_speed * time.delta_seconds();
     }
     if keyboard.pressed(KeyCode::D) {
-        *graphic = Graphic::Player(Orientation::Right);
         x_delta += player.move_speed * time.delta_seconds();
+    }
+    
+    if y_delta > 0.0 {
+        *graphic = Graphic::Player(Orientation::Up);
+    } else if y_delta < 0.0 {
+        *graphic = Graphic::Player(Orientation::Down);
+    } else if x_delta < 0.0 {
+        *graphic = Graphic::Player(Orientation::Left);
+    } else if x_delta > 0.0 {
+        *graphic = Graphic::Player(Orientation::Right);
     }
 
     let target = transform.translation + Vec3::new(x_delta, y_delta, 0.0);
